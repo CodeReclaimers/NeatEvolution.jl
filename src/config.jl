@@ -1,0 +1,203 @@
+"""
+Configuration system for NEAT.
+
+Handles loading and parsing configuration files (TOML format).
+"""
+
+using TOML
+
+"""
+GenomeConfig holds configuration for genome structure and mutation.
+"""
+struct GenomeConfig
+    # Network structure
+    num_inputs::Int
+    num_outputs::Int
+    num_hidden::Int
+
+    # Input/output keys
+    input_keys::Vector{Int}
+    output_keys::Vector{Int}
+
+    # Compatibility coefficients
+    compatibility_disjoint_coefficient::Float64
+    compatibility_weight_coefficient::Float64
+
+    # Structural mutation probabilities
+    conn_add_prob::Float64
+    conn_delete_prob::Float64
+    node_add_prob::Float64
+    node_delete_prob::Float64
+
+    # Mutation settings
+    single_structural_mutation::Bool
+    feed_forward::Bool
+    initial_connection::Symbol
+
+    # Gene attributes
+    bias_attr::FloatAttribute
+    response_attr::FloatAttribute
+    activation_attr::StringAttribute
+    aggregation_attr::StringAttribute
+    weight_attr::FloatAttribute
+    enabled_attr::BoolAttribute
+
+    # Node indexer for generating new node IDs
+    node_indexer::Ref{Int}
+end
+
+function GenomeConfig(params::Dict)
+    num_inputs = get(params, :num_inputs, 2)
+    num_outputs = get(params, :num_outputs, 1)
+
+    # By convention, input keys are negative, output keys are 0, 1, 2, ...
+    input_keys = collect(-num_inputs:-1)
+    output_keys = collect(0:num_outputs-1)
+
+    # Create attributes
+    bias_attr = FloatAttribute(:bias, params)
+    response_attr = FloatAttribute(:response, params)
+    activation_attr = StringAttribute(:activation, params)
+    aggregation_attr = StringAttribute(:aggregation, params)
+    weight_attr = FloatAttribute(:weight, params)
+    enabled_attr = BoolAttribute(:enabled, params)
+
+    # Validate attributes
+    validate(bias_attr)
+    validate(response_attr)
+    validate(activation_attr)
+    validate(aggregation_attr)
+    validate(weight_attr)
+
+    # Determine starting node indexer value
+    max_node_id = isempty(output_keys) ? 0 : maximum(output_keys)
+
+    GenomeConfig(
+        num_inputs,
+        num_outputs,
+        get(params, :num_hidden, 0),
+        input_keys,
+        output_keys,
+        get(params, :compatibility_disjoint_coefficient, 1.0),
+        get(params, :compatibility_weight_coefficient, 0.5),
+        get(params, :conn_add_prob, 0.5),
+        get(params, :conn_delete_prob, 0.5),
+        get(params, :node_add_prob, 0.2),
+        get(params, :node_delete_prob, 0.2),
+        get(params, :single_structural_mutation, false),
+        get(params, :feed_forward, true),
+        Symbol(lowercase(get(params, :initial_connection, "full"))),
+        bias_attr,
+        response_attr,
+        activation_attr,
+        aggregation_attr,
+        weight_attr,
+        enabled_attr,
+        Ref(max_node_id + 1)
+    )
+end
+
+function get_new_node_id!(config::GenomeConfig)
+    id = config.node_indexer[]
+    config.node_indexer[] += 1
+    return id
+end
+
+"""
+SpeciesConfig holds configuration for speciation.
+"""
+struct SpeciesConfig
+    compatibility_threshold::Float64
+end
+
+function SpeciesConfig(params::Dict)
+    SpeciesConfig(get(params, :compatibility_threshold, 3.0))
+end
+
+"""
+StagnationConfig holds configuration for stagnation detection.
+"""
+struct StagnationConfig
+    species_fitness_func::Symbol
+    max_stagnation::Int
+    species_elitism::Int
+end
+
+function StagnationConfig(params::Dict)
+    StagnationConfig(
+        Symbol(lowercase(get(params, :species_fitness_func, "mean"))),
+        get(params, :max_stagnation, 15),
+        get(params, :species_elitism, 0)
+    )
+end
+
+"""
+ReproductionConfig holds configuration for reproduction.
+"""
+struct ReproductionConfig
+    elitism::Int
+    survival_threshold::Float64
+    min_species_size::Int
+end
+
+function ReproductionConfig(params::Dict)
+    ReproductionConfig(
+        get(params, :elitism, 0),
+        get(params, :survival_threshold, 0.2),
+        get(params, :min_species_size, 1)
+    )
+end
+
+"""
+Config is the main configuration object for a NEAT run.
+"""
+struct Config
+    pop_size::Int
+    fitness_criterion::Symbol
+    fitness_threshold::Float64
+    reset_on_extinction::Bool
+    no_fitness_termination::Bool
+
+    genome_config::GenomeConfig
+    species_config::SpeciesConfig
+    stagnation_config::StagnationConfig
+    reproduction_config::ReproductionConfig
+end
+
+"""
+Load a NEAT configuration from a TOML file.
+"""
+function load_config(filename::String)
+    data = TOML.parsefile(filename)
+
+    # Convert string keys to symbols for easier access
+    function symbolize_keys(d::Dict)
+        Dict(Symbol(lowercase(string(k))) => (v isa Dict ? symbolize_keys(v) : v) for (k, v) in d)
+    end
+
+    config_data = symbolize_keys(data)
+
+    # Extract main NEAT parameters
+    neat_params = get(config_data, :neat, Dict())
+
+    # Extract section-specific parameters
+    genome_params = get(config_data, :defaultgenome, Dict())
+    species_params = get(config_data, :defaultspeciesset, Dict())
+    stagnation_params = get(config_data, :defaultstagnation, Dict())
+    reproduction_params = get(config_data, :defaultreproduction, Dict())
+
+    # Merge genome_params into a single dict for attribute creation
+    # (attributes look for keys like :bias_init_mean, etc.)
+
+    Config(
+        get(neat_params, :pop_size, 150),
+        Symbol(lowercase(get(neat_params, :fitness_criterion, "max"))),
+        get(neat_params, :fitness_threshold, 3.9),
+        get(neat_params, :reset_on_extinction, false),
+        get(neat_params, :no_fitness_termination, false),
+        GenomeConfig(genome_params),
+        SpeciesConfig(species_params),
+        StagnationConfig(stagnation_params),
+        ReproductionConfig(reproduction_params)
+    )
+end
