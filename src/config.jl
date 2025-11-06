@@ -33,6 +33,7 @@ struct GenomeConfig
     single_structural_mutation::Bool
     feed_forward::Bool
     initial_connection::Symbol
+    connection_fraction::Float64
 
     # Gene attributes
     bias_attr::FloatAttribute
@@ -86,7 +87,11 @@ function GenomeConfig(params::Dict)
         get(params, :node_delete_prob, 0.2),
         get(params, :single_structural_mutation, false),
         get(params, :feed_forward, true),
-        Symbol(lowercase(get(params, :initial_connection, "full"))),
+        begin
+            ic = get(params, :initial_connection, "full")
+            isa(ic, Symbol) ? ic : Symbol(lowercase(ic))
+        end,
+        get(params, :connection_fraction, 0.5),
         bias_attr,
         response_attr,
         activation_attr,

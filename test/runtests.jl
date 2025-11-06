@@ -324,6 +324,337 @@ using Random
         end
     end
 
+    @testset "Genome Initialization" begin
+        test_config_path = joinpath(@__DIR__, "test_config.toml")
+        test_config = load_config(test_config_path)
+
+        @testset "Unconnected - no hidden" begin
+            config = test_config.genome_config
+            # Modify config for this test
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 0,
+                :initial_connection => :unconnected,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0])
+            @test isempty(g.connections)
+        end
+
+        @testset "Unconnected - with hidden" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :unconnected,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test isempty(g.connections)
+        end
+
+        @testset "FS-NEAT - no hidden" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 0,
+                :initial_connection => :fs_neat,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0])
+            @test length(g.connections) == 2  # 2 inputs to 1 output
+        end
+
+        @testset "FS-NEAT - with hidden (nohidden)" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :fs_neat_nohidden,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) == 2  # Only inputs to output
+        end
+
+        @testset "FS-NEAT - with hidden (connect hidden)" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :fs_neat_hidden,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) == 6  # inputs->hidden + hidden->output
+        end
+
+        @testset "Full - no hidden" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 0,
+                :initial_connection => :full,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0])
+            @test length(g.connections) == 2
+            # Check that each input is connected to output
+            for i in temp_config.input_keys
+                @test haskey(g.connections, (i, 0))
+            end
+        end
+
+        @testset "Full nodirect - with hidden" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :full_nodirect,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) == 6
+
+            # Check that each input is connected to each hidden
+            for i in temp_config.input_keys
+                for h in [1, 2]
+                    @test haskey(g.connections, (i, h))
+                end
+            end
+
+            # Check that each hidden is connected to output
+            for h in [1, 2]
+                @test haskey(g.connections, (h, 0))
+            end
+
+            # Check that inputs are NOT directly connected to output
+            for i in temp_config.input_keys
+                @test !haskey(g.connections, (i, 0))
+            end
+        end
+
+        @testset "Full direct - with hidden" begin
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :full_direct,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) == 8
+
+            # Check that each input is connected to each hidden
+            for i in temp_config.input_keys
+                for h in [1, 2]
+                    @test haskey(g.connections, (i, h))
+                end
+            end
+
+            # Check that each hidden is connected to output
+            for h in [1, 2]
+                @test haskey(g.connections, (h, 0))
+            end
+
+            # Check that inputs ARE directly connected to output
+            for i in temp_config.input_keys
+                @test haskey(g.connections, (i, 0))
+            end
+        end
+
+        @testset "Partial nodirect - with hidden" begin
+            Random.seed!(42)
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :partial_nodirect,
+                :connection_fraction => 0.5,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) < 6  # Less than full
+            @test length(g.connections) > 0  # But has some connections
+        end
+
+        @testset "Partial direct - with hidden" begin
+            Random.seed!(42)
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :partial_direct,
+                :connection_fraction => 0.5,
+                :feed_forward => true,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(42)
+            configure_new!(g, temp_config)
+
+            @test g.key == 42
+            @test Set(keys(g.nodes)) == Set([0, 1, 2])
+            @test length(g.connections) < 8  # Less than full direct
+            @test length(g.connections) > 0  # But has some connections
+        end
+    end
+
     @testset "XOR Evolution (short run)" begin
         config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
         config = load_config(config_path)

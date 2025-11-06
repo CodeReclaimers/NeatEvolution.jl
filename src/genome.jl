@@ -40,10 +40,20 @@ function configure_new!(genome::Genome, config::GenomeConfig, rng::AbstractRNG=R
     end
 
     # Add connections based on initial_connection strategy
-    if config.initial_connection == :full || config.initial_connection == :full_nodirect
+    if config.initial_connection == :unconnected
+        # No connections
+    elseif config.initial_connection == :full || config.initial_connection == :full_nodirect
         connect_full!(genome, config, false, rng)
     elseif config.initial_connection == :full_direct
         connect_full!(genome, config, true, rng)
+    elseif config.initial_connection == :fs_neat || config.initial_connection == :fs_neat_nohidden
+        connect_fs_neat!(genome, config, false, rng)
+    elseif config.initial_connection == :fs_neat_hidden
+        connect_fs_neat!(genome, config, true, rng)
+    elseif config.initial_connection == :partial || config.initial_connection == :partial_nodirect
+        connect_partial!(genome, config, false, rng)
+    elseif config.initial_connection == :partial_direct
+        connect_partial!(genome, config, true, rng)
     end
 
     return genome
@@ -86,6 +96,78 @@ function connect_full!(genome::Genome, config::GenomeConfig, direct::Bool, rng::
         for node_key in keys(genome.nodes)
             add_connection!(genome, config, node_key, node_key, rng)
         end
+    end
+end
+
+"""
+Create connections for FS-NEAT initialization (inputs to outputs only).
+"""
+function connect_fs_neat!(genome::Genome, config::GenomeConfig, connect_hidden::Bool, rng::AbstractRNG)
+    hidden = [k for k in keys(genome.nodes) if !(k in config.output_keys)]
+    output = [k for k in keys(genome.nodes) if k in config.output_keys]
+
+    # If connect_hidden is true and there are hidden nodes, connect through hidden
+    if connect_hidden && !isempty(hidden)
+        for input_key in config.input_keys
+            for hidden_key in hidden
+                add_connection!(genome, config, input_key, hidden_key, rng)
+            end
+        end
+        for hidden_key in hidden
+            for output_key in output
+                add_connection!(genome, config, hidden_key, output_key, rng)
+            end
+        end
+    else
+        # Otherwise, connect inputs directly to outputs
+        for input_key in config.input_keys
+            for output_key in output
+                add_connection!(genome, config, input_key, output_key, rng)
+            end
+        end
+    end
+end
+
+"""
+Create partial connections based on connection_fraction.
+"""
+function connect_partial!(genome::Genome, config::GenomeConfig, direct::Bool, rng::AbstractRNG)
+    hidden = [k for k in keys(genome.nodes) if !(k in config.output_keys)]
+    output = [k for k in keys(genome.nodes) if k in config.output_keys]
+
+    # Build list of all possible connections
+    possible_connections = Tuple{Int, Int}[]
+
+    if !isempty(hidden)
+        # Input to hidden connections
+        for input_key in config.input_keys
+            for hidden_key in hidden
+                push!(possible_connections, (input_key, hidden_key))
+            end
+        end
+        # Hidden to output connections
+        for hidden_key in hidden
+            for output_key in output
+                push!(possible_connections, (hidden_key, output_key))
+            end
+        end
+    end
+
+    # Direct input-output connections
+    if direct || isempty(hidden)
+        for input_key in config.input_keys
+            for output_key in output
+                push!(possible_connections, (input_key, output_key))
+            end
+        end
+    end
+
+    # Randomly select a fraction of connections
+    num_connections = round(Int, length(possible_connections) * config.connection_fraction)
+    shuffle!(rng, possible_connections)
+    for i in 1:num_connections
+        input_key, output_key = possible_connections[i]
+        add_connection!(genome, config, input_key, output_key, rng)
     end
 end
 
