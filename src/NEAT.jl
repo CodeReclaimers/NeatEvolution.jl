@@ -41,10 +41,19 @@ export configure_new!, configure_crossover!, mutate!
 
 # Export activation functions
 export sigmoid_activation, tanh_activation, relu_activation
+export sin_activation, gauss_activation, softplus_activation
+export identity_activation, clamped_activation, inv_activation
+export log_activation, exp_activation, abs_activation
+export hat_activation, square_activation, cube_activation
+export elu_activation, lelu_activation, selu_activation
 export get_activation_function, add_activation_function!
 
 # Export aggregation functions
 export sum_aggregation, product_aggregation, max_aggregation, min_aggregation
+export maxabs_aggregation, median_aggregation, mean_aggregation
 export get_aggregation_function, add_aggregation_function!
+
+# Export graph functions
+export creates_cycle, required_for_output, feed_forward_layers
 
 end # module NEAT
