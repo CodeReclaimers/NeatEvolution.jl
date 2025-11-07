@@ -23,6 +23,7 @@ include("species.jl")
 include("stagnation.jl")
 include("reproduction.jl")
 include("reporting.jl")
+include("statistics.jl")
 include("feedforward.jl")
 include("population.jl")
 
@@ -32,7 +33,7 @@ export GenomeConfig, SpeciesConfig, StagnationConfig, ReproductionConfig
 export Genome, NodeGene, ConnectionGene
 export Population, CompleteExtinctionException
 export FeedForwardNetwork
-export StdOutReporter
+export Reporter, StdOutReporter, StatisticsReporter
 
 # Export main functions
 export run!, activate!
@@ -58,5 +59,33 @@ export creates_cycle, required_for_output, feed_forward_layers
 
 # Export reproduction functions
 export compute_spawn
+
+# Export statistics functions
+export get_fitness_mean, get_fitness_stdev, get_fitness_median
+export get_species_sizes, get_species_fitness
+export best_genome, best_genomes, best_unique_genomes
+export save_statistics
+
+# Export visualization functions (implemented in extension)
+export plot_fitness, plot_species, plot_fitness_comparison
+
+# Function stubs for extension
+"""
+Plot fitness statistics (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+"""
+function plot_fitness end
+
+"""
+Plot species sizes over time (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+"""
+function plot_species end
+
+"""
+Plot fitness comparison between runs (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+"""
+function plot_fitness_comparison end
 
 end # module NEAT

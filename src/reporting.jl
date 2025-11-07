@@ -3,9 +3,29 @@ Progress reporting for NEAT evolution.
 """
 
 """
+Abstract base type for all reporters.
+
+Reporters can implement any of these callbacks:
+- start_generation!(reporter, generation)
+- post_evaluate!(reporter, config, population, species_set, best_genome, generation)
+- end_generation!(reporter, config, population, species_set)
+- found_solution!(reporter, config, generation, best_genome)
+- complete_extinction!(reporter)
+"""
+abstract type Reporter end
+
+# Default implementations (do nothing)
+function start_generation!(reporter::Reporter, generation::Int) end
+function end_generation!(reporter::Reporter, config::Config, population::Dict{Int, Genome}, species_set) end
+function found_solution!(reporter::Reporter, config::Config, generation::Int, best_genome::Genome) end
+function complete_extinction!(reporter::Reporter) end
+
+# post_evaluate! must be implemented by each reporter that needs it
+
+"""
 Simple stdout reporter for tracking evolution progress.
 """
-mutable struct StdOutReporter
+mutable struct StdOutReporter <: Reporter
     show_species_detail::Bool
     generation::Int
 end
@@ -42,7 +62,7 @@ function end_generation!(reporter::StdOutReporter, config::Config, population::D
 end
 
 function post_evaluate!(reporter::StdOutReporter, config::Config, population::Dict{Int, Genome},
-                       species_set::SpeciesSet, best_genome::Genome)
+                       species_set, best_genome::Genome, generation::Int)
     fitnesses = [g.fitness for g in values(population) if g.fitness !== nothing]
     if !isempty(fitnesses)
         fit_mean = sum(fitnesses) / length(fitnesses)

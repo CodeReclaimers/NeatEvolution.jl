@@ -17,7 +17,7 @@ mutable struct Population
     population::Dict{Int, Genome}
     generation::Int
     best_genome::Union{Genome, Nothing}
-    reporters::Vector{StdOutReporter}
+    reporters::Vector{Reporter}
 end
 
 function Population(config::Config, rng::AbstractRNG=Random.GLOBAL_RNG)
@@ -36,11 +36,11 @@ function Population(config::Config, rng::AbstractRNG=Random.GLOBAL_RNG)
     # Initial speciation
     speciate!(species_set, config, population, 0)
 
-    Population(config, reproduction, species_set, population, 0, nothing, StdOutReporter[])
+    Population(config, reproduction, species_set, population, 0, nothing, Reporter[])
 end
 
 """Add a reporter for tracking progress."""
-function add_reporter!(pop::Population, reporter::StdOutReporter)
+function add_reporter!(pop::Population, reporter::Reporter)
     push!(pop.reporters, reporter)
 end
 
@@ -91,7 +91,7 @@ function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing
 
         # Report post-evaluation
         for reporter in pop.reporters
-            post_evaluate!(reporter, pop.config, pop.population, pop.species_set, best)
+            post_evaluate!(reporter, pop.config, pop.population, pop.species_set, best, pop.generation)
         end
 
         # Track best ever

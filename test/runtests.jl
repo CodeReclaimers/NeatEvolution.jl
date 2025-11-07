@@ -945,4 +945,162 @@ using Random
         @test winner !== nothing
         @test winner.fitness !== nothing
     end
+
+    @testset "Statistics Reporter" begin
+        test_config_path = joinpath(@__DIR__, "test_config.toml")
+        config = load_config(test_config_path)
+
+        @testset "Reporter initialization" begin
+            stats = StatisticsReporter()
+            @test isempty(stats.most_fit_genomes)
+            @test isempty(stats.generation_statistics)
+        end
+
+        @testset "Statistics collection" begin
+            # Create config with very high fitness threshold so it won't terminate early
+            high_threshold_config = Config(
+                Dict(
+                    :fitness_criterion => :max,
+                    :fitness_threshold => 10000.0,  # Very high threshold
+                    :pop_size => config.pop_size,
+                    :reset_on_extinction => config.reset_on_extinction,
+                    :no_fitness_termination => true  # Don't terminate on fitness
+                ),
+                config.genome_config,
+                config.species_config,
+                config.stagnation_config,
+                config.reproduction_config
+            )
+
+            pop = Population(high_threshold_config)
+            stats = StatisticsReporter()
+            add_reporter!(pop, stats)
+
+            function eval_simple(genomes, cfg)
+                for (gid, genome) in genomes
+                    genome.fitness = Float64(gid % 100)  # Simple fitness based on ID
+                end
+            end
+
+            # Run for exactly 5 generations
+            run!(pop, eval_simple, 5)
+
+            # Check that statistics were collected
+            @test length(stats.most_fit_genomes) == 5
+            @test length(stats.generation_statistics) == 5
+
+            # Check fitness functions
+            mean_fitness = get_fitness_mean(stats)
+            @test length(mean_fitness) == 5
+            @test all(f -> f > 0, mean_fitness)
+
+            stdev_fitness = get_fitness_stdev(stats)
+            @test length(stdev_fitness) == 5
+
+            median_fitness = get_fitness_median(stats)
+            @test length(median_fitness) == 5
+        end
+
+        @testset "Best genome functions" begin
+            stats = StatisticsReporter()
+
+            # Create some mock genomes
+            g1 = Genome(1)
+            g1.fitness = 1.0
+            g2 = Genome(2)
+            g2.fitness = 3.0
+            g3 = Genome(3)
+            g3.fitness = 2.0
+
+            push!(stats.most_fit_genomes, g1)
+            push!(stats.most_fit_genomes, g2)
+            push!(stats.most_fit_genomes, g3)
+
+            # Test best genome
+            best = best_genome(stats)
+            @test best.fitness == 3.0
+
+            # Test best genomes
+            top2 = best_genomes(stats, 2)
+            @test length(top2) == 2
+            @test top2[1].fitness == 3.0
+            @test top2[2].fitness == 2.0
+
+            # Test best unique genomes (with duplicate)
+            g2_dup = Genome(2)
+            g2_dup.fitness = 2.5  # Lower fitness than original g2
+            push!(stats.most_fit_genomes, g2_dup)
+
+            unique_best = best_unique_genomes(stats, 3)
+            @test length(unique_best) == 3  # Should have 3 unique genomes
+        end
+
+        @testset "Species statistics" begin
+            # This is tested implicitly in population evolution tests
+            # Just verify the functions exist and return correct types
+            stats = StatisticsReporter()
+
+            sizes = get_species_sizes(stats)
+            @test sizes isa Vector{Vector{Int}}
+
+            fitness = get_species_fitness(stats)
+            @test fitness isa Vector{Vector{Float64}}
+        end
+    end
+
+    @testset "Visualization (with Plots.jl)" begin
+        # Only run if Plots is available
+        try
+            using Plots
+
+            test_config_path = joinpath(@__DIR__, "test_config.toml")
+            config = load_config(test_config_path)
+
+            pop = Population(config)
+            stats = StatisticsReporter()
+            add_reporter!(pop, stats)
+
+            function eval_simple(genomes, cfg)
+                for (gid, genome) in genomes
+                    genome.fitness = Float64(gid)
+                end
+            end
+
+            run!(pop, eval_simple, 3)
+
+            @testset "plot_fitness" begin
+                # Test that plot_fitness runs without error
+                p = plot_fitness(stats, filename="test_fitness.png", show_plot=false)
+                @test p !== nothing
+                @test isfile("test_fitness.png")
+                rm("test_fitness.png", force=true)
+            end
+
+            @testset "plot_species" begin
+                # Test that plot_species runs without error
+                p = plot_species(stats, filename="test_species.png", show_plot=false)
+                @test p !== nothing
+                @test isfile("test_species.png")
+                rm("test_species.png", force=true)
+            end
+
+            @testset "save_statistics" begin
+                save_statistics(stats, prefix="test_stats")
+                @test isfile("test_stats_fitness.csv")
+                @test isfile("test_stats_speciation.csv")
+                @test isfile("test_stats_species_fitness.csv")
+
+                # Clean up
+                rm("test_stats_fitness.csv", force=true)
+                rm("test_stats_speciation.csv", force=true)
+                rm("test_stats_species_fitness.csv", force=true)
+            end
+        catch e
+            if isa(e, ArgumentError) && occursin("Package Plots not found", string(e))
+                @test_skip "Plots.jl not available, skipping visualization tests"
+            else
+                rethrow(e)
+            end
+        end
+    end
 end
