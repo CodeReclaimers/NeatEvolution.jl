@@ -1103,4 +1103,95 @@ using Random
             end
         end
     end
+
+    @testset "Network Visualization (with Plots.jl)" begin
+        # Only run if Plots is available (should be, since it's in the test deps)
+        try
+            using Plots
+
+            test_config_path = joinpath(@__DIR__, "test_config.toml")
+            config = load_config(test_config_path)
+
+            # Create a simple genome for testing
+            genome = Genome(1)
+            configure_new!(genome, config.genome_config)
+
+            # Add a hidden node
+            new_node_id = maximum(union(config.genome_config.output_keys,
+                                       [k for k in keys(genome.nodes)])) + 1
+            genome.nodes[new_node_id] = NodeGene(new_node_id, 0.5, 1.0, :sigmoid, :sum)
+
+            # Add some connections
+            genome.connections[(config.genome_config.input_keys[1], new_node_id)] =
+                ConnectionGene((config.genome_config.input_keys[1], new_node_id), 1.5, true)
+            genome.connections[(new_node_id, config.genome_config.output_keys[1])] =
+                ConnectionGene((new_node_id, config.genome_config.output_keys[1]), -0.8, true)
+            # Add disabled connection
+            genome.connections[(config.genome_config.input_keys[2], new_node_id)] =
+                ConnectionGene((config.genome_config.input_keys[2], new_node_id), 0.3, false)
+
+            @testset "draw_net basic functionality" begin
+                # Test that draw_net runs without error
+                p = draw_net(genome, config.genome_config,
+                            filename="test_network.png")
+                @test p !== nothing
+                @test isfile("test_network.png")
+                rm("test_network.png", force=true)
+            end
+
+            @testset "draw_net with custom node names" begin
+                node_names = Dict(
+                    config.genome_config.input_keys[1] => "Input1",
+                    config.genome_config.input_keys[2] => "Input2",
+                    config.genome_config.output_keys[1] => "Output"
+                )
+                p = draw_net(genome, config.genome_config,
+                            filename="test_network_named.png",
+                            node_names=node_names)
+                @test p !== nothing
+                @test isfile("test_network_named.png")
+                rm("test_network_named.png", force=true)
+            end
+
+            @testset "draw_net without disabled connections" begin
+                p = draw_net(genome, config.genome_config,
+                            filename="test_network_no_disabled.png",
+                            show_disabled=false)
+                @test p !== nothing
+                @test isfile("test_network_no_disabled.png")
+                rm("test_network_no_disabled.png", force=true)
+            end
+
+            @testset "draw_net with pruning" begin
+                p = draw_net(genome, config.genome_config,
+                            filename="test_network_pruned.png",
+                            prune_unused=true)
+                @test p !== nothing
+                @test isfile("test_network_pruned.png")
+                rm("test_network_pruned.png", force=true)
+            end
+
+            @testset "draw_net_comparison" begin
+                # Create a second genome
+                genome2 = Genome(2)
+                configure_new!(genome2, config.genome_config)
+
+                combined = draw_net_comparison([genome, genome2],
+                                               config.genome_config,
+                                               filename="test_comparison.png",
+                                               labels=["Genome 1", "Genome 2"])
+                @test combined !== nothing
+                @test isfile("test_comparison.png")
+
+                # Clean up
+                rm("test_comparison.png", force=true)
+            end
+        catch e
+            if isa(e, ArgumentError) && occursin("Package Plots not found", string(e))
+                @test_skip "Plots.jl not available, skipping network visualization tests"
+            else
+                rethrow(e)
+            end
+        end
+    end
 end

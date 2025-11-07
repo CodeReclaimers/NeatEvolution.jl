@@ -112,6 +112,18 @@ function main()
                  filename="xor_species.png",
                  title="XOR Species Evolution")
 
+    # Draw winner network structure
+    node_names = Dict(
+        -1 => "x1",
+        -2 => "x2",
+        0 => "XOR"
+    )
+    draw_net(winner, config.genome_config,
+             filename="xor_winner.png",
+             node_names=node_names,
+             show_disabled=true,
+             prune_unused=false)
+
     # Print statistics summary
     println("\nEvolution statistics:")
     println("  Generations: $(length(stats.most_fit_genomes))")
@@ -129,6 +141,7 @@ function main()
     println("\nGenerated files:")
     println("  - xor_fitness.png: Fitness evolution plot")
     println("  - xor_species.png: Species evolution plot")
+    println("  - xor_winner.png: Winner network structure diagram")
     println("  - xor_fitness.csv: Fitness statistics")
     println("  - xor_speciation.csv: Species sizes per generation")
     println("  - xor_species_fitness.csv: Species fitness per generation")

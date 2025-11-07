@@ -66,10 +66,11 @@ export get_species_sizes, get_species_fitness
 export best_genome, best_genomes, best_unique_genomes
 export save_statistics
 
-# Export visualization functions (implemented in extension)
+# Export visualization functions (implemented in extensions)
 export plot_fitness, plot_species, plot_fitness_comparison
+export draw_net, draw_net_comparison
 
-# Function stubs for extension
+# Function stubs for Plots.jl extension
 """
 Plot fitness statistics (requires Plots.jl).
 Load Plots.jl to use this function: `using Plots`
@@ -87,5 +88,27 @@ Plot fitness comparison between runs (requires Plots.jl).
 Load Plots.jl to use this function: `using Plots`
 """
 function plot_fitness_comparison end
+
+# Function stubs for network visualization (also in Plots.jl extension)
+"""
+Draw a neural network genome as a graph (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+
+Shows network topology with:
+- Input nodes (green), output nodes (blue), hidden nodes (white)
+- Connections colored by weight (red=negative, green=positive)
+- Connection thickness proportional to weight magnitude
+- Disabled connections shown as dashed gray lines
+- Layer-based automatic layout
+"""
+function draw_net end
+
+"""
+Draw multiple genomes for comparison (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+
+Creates a grid layout comparing multiple network structures.
+"""
+function draw_net_comparison end
 
 end # module NEAT
