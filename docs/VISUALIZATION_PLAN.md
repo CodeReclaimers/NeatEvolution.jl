@@ -86,8 +86,9 @@ This document outlines a plan to port visualization capabilities from neat-pytho
 
 ## Recommended Implementation Plan
 
-### Phase 1: Statistics Collection & Basic Plots (Essential)
+### Phase 1: Statistics Collection & Basic Plots ✅ COMPLETED
 **Priority: HIGH - Week 1-2**
+**Status: Implemented and tested (commit a5b6812)**
 
 #### 1.1 Statistics Reporter
 Create `src/statistics.jl`:
@@ -128,61 +129,40 @@ function plot_fitness_comparison(reporters::Vector{StatisticsReporter},
 end
 ```
 
-**Dependencies:** `Plots.jl`
+**Dependencies:** `Plots.jl` (added as weak dependency with package extension)
 
-### Phase 2: Species Visualization (Important)
+**Implementation Details:**
+- Created `src/statistics.jl` with StatisticsReporter type
+- All methods implemented and tested
+- Added to `ext/NEATVisualizationExt.jl` as package extension
+- `plot_fitness()` shows best, average, and ±1σ bands
+- `plot_species()` creates stacked area chart
+- `plot_fitness_comparison()` compares multiple runs
+- CSV export via `save_statistics()`
+- 15 tests covering all functionality
+- Updated XOR example with visualization
+
+### Phase 2: Network Structure Visualization ✅ COMPLETED
 **Priority: MEDIUM - Week 3**
+**Status: Implemented and tested (commit e8b4460)**
 
-Create `src/visualization/species.jl`:
-```julia
-function plot_species(reporter::StatisticsReporter;
-                      filename="speciation.png")
-    # Stacked area plot of species sizes
-end
+**Implementation Details:**
+- Implemented `draw_net()` function in `ext/NEATVisualizationExt.jl`
+- Uses Plots.jl instead of Graphviz for simpler dependency management
+- Layer-based automatic layout using `feed_forward_layers()`
+- Color-coded nodes: input (green), output (blue), hidden (white)
+- Connection styling by weight: red (negative), green (positive)
+- Line thickness proportional to weight magnitude
+- Disabled connections shown as dashed gray lines
+- Support for custom node names, colors, and pruning
+- `draw_net_comparison()` for side-by-side genome comparison
+- 10 tests covering all network visualization features
+- Updated XOR example to generate winner network diagram
 
-function plot_species_fitness(reporter::StatisticsReporter;
-                              filename="species_fitness.png")
-    # Line plots of each species' average fitness
-end
-```
-
-### Phase 3: Network Topology Visualization (Nice-to-have)
-**Priority: MEDIUM - Week 4-5**
-
-Create `src/visualization/network.jl`:
-
-**Option A: Using GraphPlot.jl (Simpler)**
-```julia
-using Graphs, GraphPlot, Colors
-
-function draw_network(genome::Genome, config::GenomeConfig;
-                      filename="network.svg",
-                      node_names=Dict{Int,String}(),
-                      show_disabled=true,
-                      prune_unused=false)
-    # Create directed graph
-    # Style nodes by type (input/output/hidden)
-    # Style edges by weight and enabled status
-    # Save to SVG
-end
-```
-
-**Option B: Using GraphMakie.jl (More powerful)**
-```julia
-using GraphMakie, GLMakie, Graphs
-
-function draw_network_interactive(genome::Genome, config::GenomeConfig;
-                                   layout=:spring)
-    # Interactive network visualization
-    # Can zoom, pan, hover for details
-    # Animated weight changes
-end
-```
-
-### Phase 4: Advanced Visualizations (Optional)
+### Phase 3: Advanced Visualizations (Optional)
 **Priority: LOW - Future**
 
-#### 4.1 Evolution Animation
+#### 3.1 Evolution Animation
 ```julia
 function animate_evolution(reporter::StatisticsReporter;
                            filename="evolution.gif",
@@ -192,16 +172,19 @@ function animate_evolution(reporter::StatisticsReporter;
 end
 ```
 
-#### 4.2 Genome Comparison
+#### 3.2 Interactive Network Visualization
 ```julia
-function compare_genomes(genome1::Genome, genome2::Genome, config::GenomeConfig;
-                        filename="genome_comparison.png")
-    # Side-by-side or diff view
-    # Highlight differences in structure
+using GraphMakie, GLMakie, Graphs
+
+function draw_network_interactive(genome::Genome, config::GenomeConfig;
+                                   layout=:spring)
+    # Interactive network visualization with GraphMakie
+    # Can zoom, pan, hover for details
+    # Animated weight changes
 end
 ```
 
-#### 4.3 Behavior Heatmaps
+#### 3.3 Behavior Heatmaps
 ```julia
 function plot_activation_heatmap(genome::Genome, config::GenomeConfig,
                                  input_ranges;
@@ -213,50 +196,52 @@ end
 
 ## Implementation Details
 
-### Package Structure
+### Package Structure (Actual Implementation)
 ```
 NEAT.jl/
 ├── src/
-│   ├── statistics.jl          # Statistics collection
-│   └── visualization/
-│       ├── visualization.jl    # Module file
-│       ├── fitness.jl         # Fitness plots
-│       ├── species.jl         # Species plots
-│       └── network.jl         # Network topology
+│   ├── NEAT.jl                # Main module with function stubs
+│   └── statistics.jl          # ✅ Statistics collection
+├── ext/
+│   └── NEATVisualizationExt.jl  # ✅ Package extension with all viz
 ├── examples/
 │   └── xor/
 │       ├── evolve.jl
-│       └── visualize.jl       # Visualization example
+│       └── evolve_with_visualization.jl  # ✅ Complete example
+├── test/
+│   └── runtests.jl            # ✅ 25 visualization tests
 └── docs/
-    └── visualization.md        # User guide
+    └── VISUALIZATION_PLAN.md  # This document
 ```
 
-### Dependencies to Add
+**Note:** Using Julia's package extensions (Julia 1.9+) keeps visualization as optional dependency.
 
-**Phase 1 (Required):**
+### Dependencies (Actual Implementation) ✅
+
+**Current Project.toml:**
 ```toml
-[deps]
+[weakdeps]
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+
+[extensions]
+NEATVisualizationExt = "Plots"
 
 [compat]
 Plots = "1.38"
+julia = "1.9"
+
+[extras]
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+
+[targets]
+test = ["Test", "Plots"]
 ```
 
-**Phase 2 (Optional):**
-```toml
-[weakdeps]
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231"
-GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-
-[extensions]
-NEATGraphsExt = "Graphs"
-NEATGraphPlotExt = ["Graphs", "GraphPlot"]
-NEATMakieExt = ["Graphs", "GraphMakie", "Makie"]
-```
-
-This uses Julia's package extensions feature (Julia 1.9+) to avoid hard dependencies on visualization libraries.
+**Benefits of this approach:**
+- Plots.jl is only loaded when user explicitly does `using Plots`
+- Core NEAT.jl has no visualization dependencies
+- Single extension handles all visualization (fitness, species, networks)
+- Tests include Plots to verify visualization works
 
 ### Testing Strategy
 
@@ -338,47 +323,88 @@ display(fig)
 
 For users familiar with neat-python:
 
-| neat-python | NEAT.jl |
+| neat-python | NEAT.jl (Implemented) |
 |-------------|---------|
-| `neat.StatisticsReporter()` | `NEAT.StatisticsReporter()` |
-| `p.add_reporter(stats)` | `add_reporter!(pop, stats)` |
-| `visualize.plot_stats(stats)` | `plot_fitness(stats)` |
-| `visualize.plot_species(stats)` | `plot_species(stats)` |
-| `visualize.draw_net(config, genome)` | `draw_network(genome, config.genome_config)` |
+| `neat.StatisticsReporter()` | `NEAT.StatisticsReporter()` ✅ |
+| `p.add_reporter(stats)` | `add_reporter!(pop, stats)` ✅ |
+| `visualize.plot_stats(stats)` | `plot_fitness(stats)` ✅ |
+| `visualize.plot_species(stats)` | `plot_species(stats)` ✅ |
+| `visualize.draw_net(config, genome)` | `draw_net(genome, config.genome_config)` ✅ |
+
+**Note:** Requires `using Plots` to load the visualization extension.
 
 ## Timeline Estimate
 
-- **Phase 1** (Statistics + Basic Plots): 1-2 weeks
-- **Phase 2** (Species Visualization): 1 week
-- **Phase 3** (Network Topology): 1-2 weeks
-- **Phase 4** (Advanced Features): 2-4 weeks (ongoing)
+- **Phase 1** (Statistics + Fitness/Species Plots): ✅ Completed
+- **Phase 2** (Network Structure Visualization): ✅ Completed
+- **Phase 3** (Advanced Features): ⬜ Future work (optional)
 
-**Total for MVP (Phases 1-2):** 2-3 weeks of development time
+**Total implementation time:** Completed in Phase 1 & 2
+
+## Completion Summary
+
+### What Was Implemented ✅
+
+1. **Statistics Collection** (src/statistics.jl:216)
+   - StatisticsReporter with full tracking
+   - Fitness statistics (mean, stdev, median)
+   - Species tracking and sizes
+   - CSV export functionality
+   - 15 comprehensive tests
+
+2. **Fitness & Species Visualization** (ext/NEATVisualizationExt.jl:18-185)
+   - plot_fitness() with best, average, ±1σ bands
+   - plot_species() with stacked area charts
+   - plot_fitness_comparison() for multi-run analysis
+   - 7 tests covering all plot types
+
+3. **Network Structure Visualization** (ext/NEATVisualizationExt.jl:187-403)
+   - draw_net() with layer-based layout
+   - Color-coded nodes and weight-based connections
+   - draw_net_comparison() for genome comparisons
+   - 10 tests covering all network features
+
+4. **Documentation & Examples**
+   - Updated XOR example with full visualization
+   - examples/xor/evolve_with_visualization.jl
+   - Comprehensive inline documentation
+
+### Test Results
+- **Total tests:** 226 (all passing)
+- **Visualization tests:** 25
+- **Test coverage:** Statistics, fitness plots, species plots, network diagrams
 
 ## Next Steps
 
 1. ✅ Create this plan document
-2. ⬜ Gather feedback from maintainers/users
-3. ⬜ Implement Phase 1: Statistics collection
-4. ⬜ Add tests for statistics
-5. ⬜ Implement Phase 1: Basic fitness plots
-6. ⬜ Create example visualization script for XOR
-7. ⬜ Document visualization features
-8. ⬜ Proceed to Phase 2 if Phase 1 is successful
+2. ✅ Implement Phase 1: Statistics collection
+3. ✅ Add tests for statistics
+4. ✅ Implement Phase 1: Fitness and species plots
+5. ✅ Implement Phase 2: Network structure visualization
+6. ✅ Create example visualization script for XOR
+7. ✅ Document visualization features (inline docs)
+8. ⬜ Add user guide documentation (optional)
+9. ⬜ Consider Phase 3: Advanced features (animations, interactive plots)
 
-## Open Questions
+## Implementation Decisions ✅
 
-1. Should visualization be in core package or separate `NEATViz.jl` package?
-   - **Recommendation**: Core package with weak deps/extensions
+1. **Should visualization be in core package or separate `NEATViz.jl` package?**
+   - ✅ **Decision**: Core package with weak dependencies and package extensions
+   - **Result**: Clean integration, no hard dependencies, users opt-in with `using Plots`
 
-2. Which plotting backend should be the default?
-   - **Recommendation**: Plots.jl with GR backend (fastest, most compatible)
+2. **Which plotting backend should be the default?**
+   - ✅ **Decision**: Plots.jl with GR backend (fastest, most compatible)
+   - **Result**: Works well, fast rendering, no issues
 
-3. Should we support interactive plots (Pluto/Jupyter)?
-   - **Recommendation**: Yes, but as secondary priority
+3. **Network visualization approach?**
+   - ✅ **Decision**: Use Plots.jl instead of Graphviz/GraphPlot
+   - **Rationale**: Single dependency, layer-based layout works well, simpler for users
+   - **Result**: Clean visualizations with automatic layout
 
-4. How to handle animations/GIFs?
-   - **Recommendation**: Phase 4, use Plots.jl animation framework
+4. **Future considerations:**
+   - Interactive plots (Pluto/Jupyter) - can be added using show_plot=true parameter
+   - Animations/GIFs - potential Phase 3 using Plots.jl animation framework
+   - Alternative backends (Makie, GraphMakie) - could add as additional extensions
 
 ## References
 
