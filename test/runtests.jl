@@ -655,6 +655,255 @@ using Random
         end
     end
 
+    @testset "Reproduction Spawn Computation" begin
+        using NEAT: compute_spawn
+
+        @testset "Spawn adjust 1" begin
+            adjusted_fitness = [1.0, 0.0]
+            previous_sizes = [20, 20]
+            pop_size = 40
+            min_species_size = 10
+
+            spawn = compute_spawn(adjusted_fitness, previous_sizes, pop_size, min_species_size)
+            @test spawn == [27, 13]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [30, 10]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [31, 10]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [31, 10]
+        end
+
+        @testset "Spawn adjust 2" begin
+            adjusted_fitness = [0.5, 0.5]
+            previous_sizes = [20, 20]
+            pop_size = 40
+            min_species_size = 10
+
+            spawn = compute_spawn(adjusted_fitness, previous_sizes, pop_size, min_species_size)
+            @test spawn == [20, 20]
+        end
+
+        @testset "Spawn adjust 3" begin
+            adjusted_fitness = [0.5, 0.5]
+            previous_sizes = [30, 10]
+            pop_size = 40
+            min_species_size = 10
+
+            spawn = compute_spawn(adjusted_fitness, previous_sizes, pop_size, min_species_size)
+            @test spawn == [25, 15]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [23, 17]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [21, 19]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [20, 20]
+
+            spawn = compute_spawn(adjusted_fitness, spawn, pop_size, min_species_size)
+            @test spawn == [20, 20]
+        end
+    end
+
+    @testset "Population Evolution" begin
+        test_config_path = joinpath(@__DIR__, "test_config.toml")
+
+        @testset "Fitness criterion - max" begin
+            config = load_config(test_config_path)
+            # Ensure max criterion
+            @test config.fitness_criterion == :max
+
+            pop = Population(config)
+
+            function eval_genomes_simple(genomes, cfg)
+                for (genome_id, genome) in genomes
+                    genome.fitness = 1.0
+                end
+            end
+
+            winner = run!(pop, eval_genomes_simple, 10)
+            @test winner !== nothing
+            @test winner.fitness !== nothing
+        end
+
+        @testset "Fitness criterion - min" begin
+            config = load_config(test_config_path)
+            # Change to min criterion
+            min_config = Config(
+                Dict(
+                    :fitness_criterion => :min,
+                    :fitness_threshold => -1.0,
+                    :pop_size => config.pop_size,
+                    :reset_on_extinction => config.reset_on_extinction
+                ),
+                config.genome_config,
+                config.species_config,
+                config.stagnation_config,
+                config.reproduction_config
+            )
+
+            pop = Population(min_config)
+
+            function eval_genomes_min(genomes, cfg)
+                for (genome_id, genome) in genomes
+                    genome.fitness = -1.0
+                end
+            end
+
+            winner = run!(pop, eval_genomes_min, 10)
+            @test winner !== nothing
+            @test winner.fitness !== nothing
+        end
+
+        @testset "Fitness criterion - mean" begin
+            config = load_config(test_config_path)
+            # Change to mean criterion
+            mean_config = Config(
+                Dict(
+                    :fitness_criterion => :mean,
+                    :fitness_threshold => 0.9,
+                    :pop_size => config.pop_size,
+                    :reset_on_extinction => config.reset_on_extinction
+                ),
+                config.genome_config,
+                config.species_config,
+                config.stagnation_config,
+                config.reproduction_config
+            )
+
+            pop = Population(mean_config)
+
+            function eval_genomes_mean(genomes, cfg)
+                for (genome_id, genome) in genomes
+                    genome.fitness = 1.0
+                end
+            end
+
+            winner = run!(pop, eval_genomes_mean, 10)
+            @test winner !== nothing
+            @test winner.fitness !== nothing
+        end
+    end
+
+    @testset "Simple Evolution Run" begin
+        test_config_path = joinpath(@__DIR__, "test_config.toml")
+        config = load_config(test_config_path)
+
+        @testset "Dummy fitness - serial" begin
+            pop = Population(config)
+
+            function eval_dummy_genomes(genomes, cfg)
+                for (genome_id, genome) in genomes
+                    net = FeedForwardNetwork(genome, cfg.genome_config)
+                    output = activate!(net, [0.5, 0.5])
+                    genome.fitness = 0.0
+                end
+            end
+
+            # Run for a few generations
+            winner = run!(pop, eval_dummy_genomes, 5)
+
+            @test winner !== nothing
+            @test winner.fitness !== nothing
+        end
+
+        @testset "Simple fitness" begin
+            pop = Population(config)
+
+            function eval_simple_fitness(genomes, cfg)
+                for (genome_id, genome) in genomes
+                    # Very simple fitness based on number of connections
+                    genome.fitness = Float64(length(genome.connections))
+                end
+            end
+
+            winner = run!(pop, eval_simple_fitness, 10)
+
+            @test winner !== nothing
+            @test winner.fitness !== nothing
+            @test winner.fitness >= 0.0
+        end
+    end
+
+    @testset "Genome Mutations" begin
+        test_config_path = joinpath(@__DIR__, "test_config.toml")
+        config = load_config(test_config_path)
+
+        @testset "Mutate connections" begin
+            g = Genome(1)
+            configure_new!(g, config.genome_config)
+
+            initial_connections = copy(g.connections)
+
+            # Mutate multiple times
+            for _ in 1:10
+                mutate!(g, config.genome_config)
+            end
+
+            # After mutations, genome should still be valid
+            @test !isempty(g.nodes)
+            @test g.key == 1
+        end
+
+        @testset "Add node mutation" begin
+            Random.seed!(42)
+            g = Genome(1)
+            configure_new!(g, config.genome_config)
+
+            initial_node_count = length(g.nodes)
+
+            # Force node addition by mutating many times
+            for _ in 1:20
+                mutate!(g, config.genome_config)
+            end
+
+            # Should have at least the original nodes
+            @test length(g.nodes) >= initial_node_count
+        end
+
+        @testset "Add connection mutation" begin
+            Random.seed!(43)
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 2,
+                :initial_connection => :unconnected,
+                :feed_forward => true,
+                :conn_add_prob => 0.9,
+                :node_add_prob => 0.0,
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 0.0,
+                :bias_init_stdev => 1.0,
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(1)
+            configure_new!(g, temp_config)
+
+            @test isempty(g.connections)
+
+            # Mutate to add connections
+            for _ in 1:20
+                mutate!(g, temp_config)
+            end
+
+            # Should have added some connections
+            @test length(g.connections) > 0
+        end
+    end
+
     @testset "XOR Evolution (short run)" begin
         config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
         config = load_config(config_path)

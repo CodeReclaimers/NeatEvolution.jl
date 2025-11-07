@@ -4,7 +4,7 @@ fitness_threshold = 0.9
 pop_size = 150
 reset_on_extinction = false
 
-[genome]
+[DefaultGenome]
 # Network structure
 num_inputs = 2
 num_outputs = 1
@@ -67,15 +67,15 @@ weight_mutate_power = 0.5
 weight_mutate_rate = 0.8
 weight_replace_rate = 0.1
 
-[species]
+[DefaultSpeciesSet]
 compatibility_threshold = 3.0
 
-[stagnation]
+[DefaultStagnation]
 species_fitness_func = "max"
 max_stagnation = 20
 species_elitism = 1
 
-[reproduction]
+[DefaultReproduction]
 elitism = 2
 survival_threshold = 0.2
 min_species_size = 2

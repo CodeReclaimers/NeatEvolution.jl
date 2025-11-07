@@ -170,6 +170,24 @@ struct Config
 end
 
 """
+Construct Config from individual parameters and component configs.
+"""
+function Config(params::Dict, genome_config::GenomeConfig, species_config::SpeciesConfig,
+                stagnation_config::StagnationConfig, reproduction_config::ReproductionConfig)
+    Config(
+        get(params, :pop_size, 150),
+        get(params, :fitness_criterion, :max),
+        get(params, :fitness_threshold, 3.9),
+        get(params, :reset_on_extinction, false),
+        get(params, :no_fitness_termination, false),
+        genome_config,
+        species_config,
+        stagnation_config,
+        reproduction_config
+    )
+end
+
+"""
 Load a NEAT configuration from a TOML file.
 """
 function load_config(filename::String)

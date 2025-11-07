@@ -56,4 +56,7 @@ export get_aggregation_function, add_aggregation_function!
 # Export graph functions
 export creates_cycle, required_for_output, feed_forward_layers
 
+# Export reproduction functions
+export compute_spawn
+
 end # module NEAT
