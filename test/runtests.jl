@@ -1194,4 +1194,110 @@ using Random
             end
         end
     end
+
+    @testset "Advanced Visualization - Phase 3 (with Plots.jl)" begin
+        # Only run if Plots is available
+        try
+            using Plots
+
+            test_config_path = joinpath(@__DIR__, "test_config.toml")
+            config = load_config(test_config_path)
+
+            # Create and evolve a simple population for testing
+            pop = Population(config)
+            stats = StatisticsReporter()
+            add_reporter!(pop, stats)
+
+            function eval_simple_2d(genomes, cfg)
+                for (gid, genome) in genomes
+                    # Simple fitness based on XOR-like behavior
+                    net = FeedForwardNetwork(genome, cfg.genome_config)
+                    fitness = 0.0
+                    for x in [0.0, 1.0]
+                        for y in [0.0, 1.0]
+                            output = activate!(net, [x, y])
+                            # Reward XOR behavior
+                            expected = (x + y == 1.0) ? 1.0 : 0.0
+                            fitness -= (output[1] - expected)^2
+                        end
+                    end
+                    genome.fitness = fitness
+                end
+            end
+
+            # Run for a few generations to get data
+            run!(pop, eval_simple_2d, 5)
+
+            winner = best_genome(stats)
+
+            @testset "plot_activation_heatmap" begin
+                # Test basic heatmap
+                p = plot_activation_heatmap(winner, config.genome_config,
+                                           x_range=(0.0, 1.0),
+                                           y_range=(0.0, 1.0),
+                                           resolution=20,
+                                           filename="test_heatmap.png")
+                @test p !== nothing
+                @test isfile("test_heatmap.png")
+                rm("test_heatmap.png", force=true)
+            end
+
+            @testset "plot_activation_heatmap with different resolution" begin
+                p = plot_activation_heatmap(winner, config.genome_config,
+                                           resolution=10,
+                                           filename="test_heatmap_lowres.png")
+                @test p !== nothing
+                @test isfile("test_heatmap_lowres.png")
+                rm("test_heatmap_lowres.png", force=true)
+            end
+
+            @testset "plot_activation_comparison" begin
+                # Get top 3 genomes
+                top_genomes = best_genomes(stats, 3)
+
+                combined = plot_activation_comparison(top_genomes,
+                                                     config.genome_config,
+                                                     resolution=15,
+                                                     labels=["Best", "2nd", "3rd"],
+                                                     filename="test_heatmap_comparison.png")
+                @test combined !== nothing
+                @test isfile("test_heatmap_comparison.png")
+                rm("test_heatmap_comparison.png", force=true)
+            end
+
+            @testset "animate_evolution" begin
+                # Test animation generation
+                anim = animate_evolution(stats, config.genome_config,
+                                        filename="test_evolution.gif",
+                                        fps=2,
+                                        show_disabled=false)
+                @test anim !== nothing
+                @test isfile("test_evolution.gif")
+                rm("test_evolution.gif", force=true)
+            end
+
+            @testset "animate_evolution with node names" begin
+                node_names = Dict(
+                    config.genome_config.input_keys[1] => "X",
+                    config.genome_config.input_keys[2] => "Y",
+                    config.genome_config.output_keys[1] => "Out"
+                )
+
+                anim = animate_evolution(stats, config.genome_config,
+                                        filename="test_evolution_named.gif",
+                                        fps=1,
+                                        node_names=node_names)
+                @test anim !== nothing
+                @test isfile("test_evolution_named.gif")
+                rm("test_evolution_named.gif", force=true)
+            end
+
+        catch e
+            if isa(e, ArgumentError) && occursin("Package Plots not found", string(e))
+                @test_skip "Plots.jl not available, skipping advanced visualization tests"
+            else
+                rethrow(e)
+            end
+        end
+    end
 end

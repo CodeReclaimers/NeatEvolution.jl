@@ -124,6 +124,22 @@ function main()
              show_disabled=true,
              prune_unused=false)
 
+    # Plot activation heatmap showing what the network learned
+    plot_activation_heatmap(winner, config.genome_config,
+                           x_range=(-0.5, 1.5),
+                           y_range=(-0.5, 1.5),
+                           resolution=100,
+                           filename="xor_activation_heatmap.png",
+                           title="XOR Winner Activation Map")
+
+    # Animate evolution (optional - can take a moment to generate)
+    println("\nGenerating evolution animation...")
+    animate_evolution(stats, config.genome_config,
+                     filename="xor_evolution.gif",
+                     fps=3,
+                     node_names=node_names,
+                     show_disabled=false)
+
     # Print statistics summary
     println("\nEvolution statistics:")
     println("  Generations: $(length(stats.most_fit_genomes))")
@@ -142,6 +158,8 @@ function main()
     println("  - xor_fitness.png: Fitness evolution plot")
     println("  - xor_species.png: Species evolution plot")
     println("  - xor_winner.png: Winner network structure diagram")
+    println("  - xor_activation_heatmap.png: Activation heatmap showing network behavior")
+    println("  - xor_evolution.gif: Animation of network evolution over time")
     println("  - xor_fitness.csv: Fitness statistics")
     println("  - xor_speciation.csv: Species sizes per generation")
     println("  - xor_species_fitness.csv: Species fitness per generation")

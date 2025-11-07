@@ -407,4 +407,196 @@ function NEAT.draw_net_comparison(genomes::Vector{NEAT.Genome},
     return combined
 end
 
+"""
+Plot activation heatmap showing network output across 2D input space.
+
+Useful for visualizing what a network has learned for 2D problems like XOR,
+classification, or control tasks with 2 inputs.
+
+# Arguments
+- `genome::Genome`: The genome to visualize
+- `config::GenomeConfig`: Configuration for the genome
+- `x_range::Tuple=(0.0, 1.0)`: Range for first input (min, max)
+- `y_range::Tuple=(0.0, 1.0)`: Range for second input (min, max)
+- `resolution::Int=50`: Number of points to sample in each dimension
+- `output_index::Int=1`: Which output node to visualize (for multi-output networks)
+- `filename::String="activation_heatmap.png"`: Output filename
+- `title::String="Network Activation"`: Plot title
+- `show_plot::Bool=false`: Display the plot interactively
+"""
+function NEAT.plot_activation_heatmap(genome::NEAT.Genome,
+                                       config::NEAT.GenomeConfig;
+                                       x_range::Tuple{Float64, Float64}=(0.0, 1.0),
+                                       y_range::Tuple{Float64, Float64}=(0.0, 1.0),
+                                       resolution::Int=50,
+                                       output_index::Int=1,
+                                       filename::String="activation_heatmap.png",
+                                       title::String="Network Activation",
+                                       show_plot::Bool=false)
+
+    # Verify we have exactly 2 inputs
+    if length(config.input_keys) != 2
+        @warn "plot_activation_heatmap requires exactly 2 input nodes, found $(length(config.input_keys))"
+        return nothing
+    end
+
+    # Create network
+    net = NEAT.FeedForwardNetwork(genome, config)
+
+    # Create grid of input values
+    x_vals = range(x_range[1], x_range[2], length=resolution)
+    y_vals = range(y_range[1], y_range[2], length=resolution)
+
+    # Compute activation for each point
+    z = zeros(resolution, resolution)
+    for (i, x) in enumerate(x_vals)
+        for (j, y) in enumerate(y_vals)
+            inputs = [x, y]
+            outputs = NEAT.activate!(net, inputs)
+            z[j, i] = length(outputs) >= output_index ? outputs[output_index] : 0.0
+        end
+    end
+
+    # Create heatmap
+    p = heatmap(x_vals, y_vals, z,
+                xlabel="Input 1",
+                ylabel="Input 2",
+                title=title,
+                colorbar=true,
+                color=:viridis,
+                aspect_ratio=:equal)
+
+    if !isempty(filename)
+        savefig(p, filename)
+        println("Activation heatmap saved to $filename")
+    end
+
+    if show_plot
+        display(p)
+    end
+
+    return p
+end
+
+"""
+Plot side-by-side comparison of genome activations.
+
+Shows how different genomes respond to the same input space.
+
+# Arguments
+- `genomes::Vector{Genome}`: Genomes to compare
+- `config::GenomeConfig`: Configuration for the genomes
+- `x_range::Tuple=(0.0, 1.0)`: Range for first input
+- `y_range::Tuple=(0.0, 1.0)`: Range for second input
+- `resolution::Int=50`: Sampling resolution
+- `labels::Union{Nothing, Vector{String}}=nothing`: Labels for each genome
+- `filename::String="activation_comparison.png"`: Output filename
+- `show_plot::Bool=false`: Display the plot interactively
+"""
+function NEAT.plot_activation_comparison(genomes::Vector{NEAT.Genome},
+                                          config::NEAT.GenomeConfig;
+                                          x_range::Tuple{Float64, Float64}=(0.0, 1.0),
+                                          y_range::Tuple{Float64, Float64}=(0.0, 1.0),
+                                          resolution::Int=50,
+                                          labels::Union{Nothing, Vector{String}}=nothing,
+                                          filename::String="activation_comparison.png",
+                                          show_plot::Bool=false)
+
+    plots_list = []
+
+    for (i, genome) in enumerate(genomes)
+        label = labels !== nothing && i <= length(labels) ? labels[i] : "Genome $i"
+
+        p = NEAT.plot_activation_heatmap(genome, config,
+                                          x_range=x_range,
+                                          y_range=y_range,
+                                          resolution=resolution,
+                                          filename="",
+                                          title=label,
+                                          show_plot=false)
+
+        if p !== nothing
+            push!(plots_list, p)
+        end
+    end
+
+    if isempty(plots_list)
+        @warn "No valid heatmaps generated"
+        return nothing
+    end
+
+    # Combine into grid
+    n = length(plots_list)
+    ncols = Int(ceil(sqrt(n)))
+    nrows = Int(ceil(n / ncols))
+
+    combined = plot(plots_list..., layout=(nrows, ncols), size=(400*ncols, 400*nrows))
+
+    if !isempty(filename)
+        savefig(combined, filename)
+        println("Activation comparison saved to $filename")
+    end
+
+    if show_plot
+        display(combined)
+    end
+
+    return combined
+end
+
+"""
+Animate evolution showing network topology changes over generations.
+
+Creates a GIF showing how the best network evolves over time.
+
+# Arguments
+- `reporter::StatisticsReporter`: Statistics reporter with evolution history
+- `config::GenomeConfig`: Configuration for the genomes
+- `filename::String="evolution.gif"`: Output filename
+- `fps::Int=2`: Frames per second
+- `show_disabled::Bool=false`: Show disabled connections
+- `node_names::Union{Nothing, Dict}=nothing`: Custom node names
+"""
+function NEAT.animate_evolution(reporter::NEAT.StatisticsReporter,
+                                 config::NEAT.GenomeConfig;
+                                 filename::String="evolution.gif",
+                                 fps::Int=2,
+                                 show_disabled::Bool=false,
+                                 node_names::Union{Nothing, Dict}=nothing)
+
+    if isempty(reporter.most_fit_genomes)
+        @warn "No genomes to animate"
+        return nothing
+    end
+
+    # Sample genomes to avoid too many frames
+    genomes = reporter.most_fit_genomes
+    n_genomes = length(genomes)
+
+    # Sample at most 50 frames
+    step = max(1, div(n_genomes, 50))
+    sampled_indices = 1:step:n_genomes
+
+    # Create animation
+    anim = @animate for idx in sampled_indices
+        genome = genomes[idx]
+        fitness = genome.fitness !== nothing ? round(genome.fitness, digits=4) : "N/A"
+
+        title = "Generation $idx | Fitness: $fitness"
+
+        NEAT.draw_net(genome, config,
+                     filename="",
+                     node_names=node_names,
+                     show_disabled=show_disabled,
+                     show_plot=false)
+
+        plot!(title=title)
+    end
+
+    gif(anim, filename, fps=fps)
+    println("Evolution animation saved to $filename")
+
+    return anim
+end
+
 end # module NEATVisualizationExt

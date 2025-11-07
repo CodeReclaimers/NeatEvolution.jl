@@ -69,6 +69,7 @@ export save_statistics
 # Export visualization functions (implemented in extensions)
 export plot_fitness, plot_species, plot_fitness_comparison
 export draw_net, draw_net_comparison
+export plot_activation_heatmap, plot_activation_comparison, animate_evolution
 
 # Function stubs for Plots.jl extension
 """
@@ -110,5 +111,36 @@ Load Plots.jl to use this function: `using Plots`
 Creates a grid layout comparing multiple network structures.
 """
 function draw_net_comparison end
+
+# Phase 3: Advanced visualization functions
+"""
+Plot activation heatmap showing network output across 2D input space (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+
+Useful for visualizing what a network has learned for 2D problems like XOR,
+classification, or control tasks with 2 inputs.
+
+Creates a heatmap showing network output values across all combinations of two inputs.
+"""
+function plot_activation_heatmap end
+
+"""
+Plot side-by-side comparison of genome activations (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+
+Shows how different genomes respond to the same 2D input space.
+"""
+function plot_activation_comparison end
+
+"""
+Animate evolution showing network topology changes over generations (requires Plots.jl).
+Load Plots.jl to use this function: `using Plots`
+
+Creates a GIF showing how the best network evolves over time, including:
+- Network topology changes (new nodes, connections)
+- Fitness progression
+- Structural complexity evolution
+"""
+function animate_evolution end
 
 end # module NEAT
