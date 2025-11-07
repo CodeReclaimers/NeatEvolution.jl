@@ -1,15 +1,48 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         julia-version: ['1.10', '1.11', '1.12', 'nightly']
         os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          # Add coverage job only for one configuration
+          - os: ubuntu-latest
+            julia-version: '1.11'
+            coverage: true
+        exclude:
+          # Allow nightly failures
+          - julia-version: nightly
+    continue-on-error: ${{ matrix.julia-version == 'nightly' }}
+
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v1
+
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
-      - run: julia --project -e 'using Pkg; Pkg.test()'
+
+      - uses: julia-actions/cache@v2
+
+      - uses: julia-actions/julia-buildpkg@v1
+
+      - uses: julia-actions/julia-runtest@v1
+        with:
+          coverage: ${{ matrix.coverage == true }}
+
+      - uses: julia-actions/julia-processcoverage@v1
+        if: matrix.coverage
+
+      - uses: codecov/codecov-action@v4
+        if: matrix.coverage
+        with:
+          file: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
