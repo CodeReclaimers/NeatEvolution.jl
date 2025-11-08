@@ -15,9 +15,11 @@ num_hidden = 0
 feed_forward = true
 initial_connection = "full"
 
-# Compatibility coefficients
-compatibility_disjoint_coefficient = 1.0
-compatibility_weight_coefficient = 0.5
+# Compatibility coefficients (per NEAT paper Equation 1)
+# δ = (c₁·E)/N + (c₂·D)/N + c₃·W̄
+compatibility_excess_coefficient = 1.0     # c₁ - coefficient for excess genes
+compatibility_disjoint_coefficient = 1.0   # c₂ - coefficient for disjoint genes
+compatibility_weight_coefficient = 0.4     # c₃ - coefficient for weight differences
 
 # Structural mutation probabilities
 conn_add_prob = 0.5

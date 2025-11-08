@@ -29,9 +29,10 @@ bias_mutate_power = 0.5
 bias_mutate_rate = 0.7
 bias_replace_rate = 0.1
 
-# Genome compatibility options
+# Genome compatibility options (per NEAT paper Equation 1)
+compatibility_excess_coefficient = 1.0
 compatibility_disjoint_coefficient = 1.0
-compatibility_weight_coefficient = 0.5
+compatibility_weight_coefficient = 0.4
 
 # Connection add/remove rates
 conn_add_prob = 0.5

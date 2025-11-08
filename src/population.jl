@@ -113,6 +113,10 @@ function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing
             end
         end
 
+        # Reset innovation cache for new generation
+        # Per NEAT paper: same structural mutations within a generation get the same innovation number
+        reset_innovation_cache!(pop.config.genome_config)
+
         # Create next generation
         pop.population = reproduce!(pop.reproduction, pop.config, pop.species_set,
                                     pop.config.pop_size, pop.generation, rng)

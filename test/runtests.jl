@@ -1123,12 +1123,12 @@ using Random
 
             # Add some connections
             genome.connections[(config.genome_config.input_keys[1], new_node_id)] =
-                ConnectionGene((config.genome_config.input_keys[1], new_node_id), 1.5, true)
+                ConnectionGene((config.genome_config.input_keys[1], new_node_id), 1.5, true, 0)
             genome.connections[(new_node_id, config.genome_config.output_keys[1])] =
-                ConnectionGene((new_node_id, config.genome_config.output_keys[1]), -0.8, true)
+                ConnectionGene((new_node_id, config.genome_config.output_keys[1]), -0.8, true, 1)
             # Add disabled connection
             genome.connections[(config.genome_config.input_keys[2], new_node_id)] =
-                ConnectionGene((config.genome_config.input_keys[2], new_node_id), 0.3, false)
+                ConnectionGene((config.genome_config.input_keys[2], new_node_id), 0.3, false, 2)
 
             @testset "draw_net basic functionality" begin
                 # Test that draw_net runs without error

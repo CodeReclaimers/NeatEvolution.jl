@@ -64,15 +64,19 @@ end
 
 """
 ConnectionGene represents a connection between nodes.
+
+The innovation field tracks the historical origin of this connection gene,
+enabling proper alignment during crossover as per the NEAT paper.
 """
 mutable struct ConnectionGene
     key::Tuple{Int, Int}  # (input_id, output_id)
     weight::Float64
     enabled::Bool
+    innovation::Int      # Historical marker for gene alignment
 end
 
-function ConnectionGene(key::Tuple{Int, Int})
-    ConnectionGene(key, 0.0, true)
+function ConnectionGene(key::Tuple{Int, Int}, innovation::Int=0)
+    ConnectionGene(key, 0.0, true, innovation)
 end
 
 function init_attributes!(gene::ConnectionGene, config, rng::AbstractRNG=Random.GLOBAL_RNG)
@@ -88,15 +92,24 @@ function mutate!(gene::ConnectionGene, config, rng::AbstractRNG=Random.GLOBAL_RN
 end
 
 function Base.copy(gene::ConnectionGene)
-    return ConnectionGene(gene.key, gene.weight, gene.enabled)
+    return ConnectionGene(gene.key, gene.weight, gene.enabled, gene.innovation)
 end
 
 function crossover(gene1::ConnectionGene, gene2::ConnectionGene, rng::AbstractRNG=Random.GLOBAL_RNG)
     @assert gene1.key == gene2.key "Cannot crossover genes with different keys"
 
-    new_gene = ConnectionGene(gene1.key)
+    # Inherit innovation number from one parent (prefer gene1 for consistency)
+    # Note: In NEAT paper, matching genes should have same innovation number,
+    # but we use connection keys for matching to handle edge cases
+    new_gene = ConnectionGene(gene1.key, gene1.innovation)
     new_gene.weight = rand(rng, Bool) ? gene1.weight : gene2.weight
-    new_gene.enabled = rand(rng, Bool) ? gene1.enabled : gene2.enabled
+
+    # Per NEAT paper: if either parent is disabled, 75% chance offspring is disabled
+    if !gene1.enabled || !gene2.enabled
+        new_gene.enabled = rand(rng) > 0.75
+    else
+        new_gene.enabled = true
+    end
 
     return new_gene
 end

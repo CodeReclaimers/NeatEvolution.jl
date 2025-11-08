@@ -19,9 +19,11 @@ struct GenomeConfig
     input_keys::Vector{Int}
     output_keys::Vector{Int}
 
-    # Compatibility coefficients
-    compatibility_disjoint_coefficient::Float64
-    compatibility_weight_coefficient::Float64
+    # Compatibility coefficients (per NEAT paper Equation 1)
+    # δ = (c₁·E)/N + (c₂·D)/N + c₃·W̄
+    compatibility_excess_coefficient::Float64       # c₁ - coefficient for excess genes
+    compatibility_disjoint_coefficient::Float64     # c₂ - coefficient for disjoint genes
+    compatibility_weight_coefficient::Float64       # c₃ - coefficient for weight differences
 
     # Structural mutation probabilities
     conn_add_prob::Float64
@@ -45,6 +47,12 @@ struct GenomeConfig
 
     # Node indexer for generating new node IDs
     node_indexer::Ref{Int}
+
+    # Innovation tracking for connection genes (per NEAT paper)
+    # innovation_indexer: next innovation number to assign
+    # innovation_cache: maps (from_node, to_node) -> innovation for current generation
+    innovation_indexer::Ref{Int}
+    innovation_cache::Ref{Dict{Tuple{Int,Int}, Int}}
 end
 
 function GenomeConfig(params::Dict)
@@ -79,8 +87,9 @@ function GenomeConfig(params::Dict)
         get(params, :num_hidden, 0),
         input_keys,
         output_keys,
-        get(params, :compatibility_disjoint_coefficient, 1.0),
-        get(params, :compatibility_weight_coefficient, 0.5),
+        get(params, :compatibility_excess_coefficient, 1.0),     # c₁ per NEAT paper
+        get(params, :compatibility_disjoint_coefficient, 1.0),   # c₂ per NEAT paper
+        get(params, :compatibility_weight_coefficient, 0.4),     # c₃ per NEAT paper
         get(params, :conn_add_prob, 0.5),
         get(params, :conn_delete_prob, 0.5),
         get(params, :node_add_prob, 0.2),
@@ -98,7 +107,9 @@ function GenomeConfig(params::Dict)
         aggregation_attr,
         weight_attr,
         enabled_attr,
-        Ref(max_node_id + 1)
+        Ref(max_node_id + 1),
+        Ref(0),  # innovation_indexer starts at 0
+        Ref(Dict{Tuple{Int,Int}, Int}())  # innovation_cache starts empty
     )
 end
 
@@ -106,6 +117,36 @@ function get_new_node_id!(config::GenomeConfig)
     id = config.node_indexer[]
     config.node_indexer[] += 1
     return id
+end
+
+"""
+Get or create an innovation number for a connection.
+
+Per NEAT paper: if the same structural mutation occurs multiple times
+in a generation, it should receive the same innovation number.
+"""
+function get_innovation!(config::GenomeConfig, connection_key::Tuple{Int,Int})
+    cache = config.innovation_cache[]
+    if haskey(cache, connection_key)
+        return cache[connection_key]
+    else
+        innovation = config.innovation_indexer[]
+        config.innovation_indexer[] += 1
+        cache[connection_key] = innovation
+        return innovation
+    end
+end
+
+"""
+Reset the innovation cache at generation boundaries.
+
+Per NEAT paper: innovation numbers persist across generations,
+but the cache of connection_key -> innovation mappings is reset
+each generation to allow the same structural mutations to be
+detected within a generation.
+"""
+function reset_innovation_cache!(config::GenomeConfig)
+    config.innovation_cache[] = Dict{Tuple{Int,Int}, Int}()
 end
 
 """

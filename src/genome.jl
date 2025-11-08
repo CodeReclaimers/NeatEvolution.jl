@@ -173,11 +173,16 @@ end
 
 """
 Add a connection between two nodes.
+
+Assigns an innovation number using the config's innovation tracking system.
+Per NEAT paper: if the same connection structure appears multiple times
+in a generation, it receives the same innovation number.
 """
 function add_connection!(genome::Genome, config::GenomeConfig, input_key::Int, output_key::Int,
                         rng::AbstractRNG=Random.GLOBAL_RNG)
     key = (input_key, output_key)
-    conn = ConnectionGene(key)
+    innovation = get_innovation!(config, key)
+    conn = ConnectionGene(key, innovation)
     init_attributes!(conn, config, rng)
     genome.connections[key] = conn
 end
@@ -377,57 +382,146 @@ end
 
 """
 Compute genetic distance between two genomes for speciation.
+
+Per NEAT paper (Equation 1, Section 3.3):
+δ = (c₁·E)/N + (c₂·D)/N + c₃·W̄
+
+Where:
+- E = number of excess genes (beyond the other genome's innovation range)
+- D = number of disjoint genes (within range but not matching)
+- W̄ = average weight difference of matching genes
+- N = number of genes in larger genome
+- c₁, c₂, c₃ = compatibility coefficients
+
+The paper only specifies distance for connection genes. For node genes,
+we use a simplified approach: count non-matching nodes as disjoint.
 """
 function distance(genome1::Genome, genome2::Genome, config::GenomeConfig)
-    # Node gene distance
-    node_distance = 0.0
-    if !isempty(genome1.nodes) || !isempty(genome2.nodes)
-        disjoint_nodes = 0
-
-        for k2 in keys(genome2.nodes)
-            if !haskey(genome1.nodes, k2)
-                disjoint_nodes += 1
-            end
-        end
-
-        for (k1, n1) in genome1.nodes
-            n2 = get(genome2.nodes, k1, nothing)
-            if n2 === nothing
-                disjoint_nodes += 1
-            else
-                node_distance += distance(n1, n2, config)
-            end
-        end
-
-        max_nodes = max(length(genome1.nodes), length(genome2.nodes))
-        node_distance = (node_distance +
-                        config.compatibility_disjoint_coefficient * disjoint_nodes) / max_nodes
+    # Connection gene distance per NEAT paper
+    if isempty(genome1.connections) && isempty(genome2.connections)
+        # Both genomes have no connections - use simple node distance
+        return _node_distance_simple(genome1, genome2, config)
     end
 
-    # Connection gene distance
-    connection_distance = 0.0
-    if !isempty(genome1.connections) || !isempty(genome2.connections)
-        disjoint_connections = 0
+    # Get all connection genes sorted by innovation number
+    conn1 = sort(collect(values(genome1.connections)), by=c->c.innovation)
+    conn2 = sort(collect(values(genome2.connections)), by=c->c.innovation)
 
-        for k2 in keys(genome2.connections)
-            if !haskey(genome1.connections, k2)
-                disjoint_connections += 1
-            end
-        end
+    # Find innovation number ranges
+    if !isempty(conn1) && !isempty(conn2)
+        max_innov1 = maximum(c.innovation for c in conn1)
+        max_innov2 = maximum(c.innovation for c in conn2)
+        min_innov1 = minimum(c.innovation for c in conn1)
+        min_innov2 = minimum(c.innovation for c in conn2)
 
-        for (k1, c1) in genome1.connections
-            c2 = get(genome2.connections, k1, nothing)
-            if c2 === nothing
-                disjoint_connections += 1
+        # Build innovation sets for quick lookup
+        innov1 = Set(c.innovation for c in conn1)
+        innov2 = Set(c.innovation for c in conn2)
+
+        # Count excess, disjoint, and matching genes
+        excess = 0
+        disjoint = 0
+        weight_diff = 0.0
+        matching = 0
+
+        # Check all innovations in genome1
+        for c1 in conn1
+            if c1.innovation in innov2
+                # Matching gene - compute weight difference
+                c2 = conn2[findfirst(c->c.innovation == c1.innovation, conn2)]
+                weight_diff += abs(c1.weight - c2.weight)
+                matching += 1
+            elseif c1.innovation > max_innov2
+                # Excess gene (beyond genome2's range)
+                excess += 1
             else
-                connection_distance += distance(c1, c2, config)
+                # Disjoint gene (within range but not matching)
+                disjoint += 1
             end
         end
 
-        max_conn = max(length(genome1.connections), length(genome2.connections))
-        connection_distance = (connection_distance +
-                              config.compatibility_disjoint_coefficient * disjoint_connections) / max_conn
+        # Check genes only in genome2
+        for c2 in conn2
+            if !(c2.innovation in innov1)
+                if c2.innovation > max_innov1
+                    # Excess gene (beyond genome1's range)
+                    excess += 1
+                else
+                    # Disjoint gene (within range but not matching)
+                    disjoint += 1
+                end
+            end
+        end
+
+        # Calculate average weight difference
+        avg_weight_diff = matching > 0 ? weight_diff / matching : 0.0
+
+        # N = number of genes in larger genome
+        N = max(length(conn1), length(conn2))
+        N = max(N, 1)  # Avoid division by zero
+
+        # Apply NEAT paper's formula: δ = (c₁·E)/N + (c₂·D)/N + c₃·W̄
+        connection_distance = (config.compatibility_excess_coefficient * excess) / N +
+                             (config.compatibility_disjoint_coefficient * disjoint) / N +
+                             config.compatibility_weight_coefficient * avg_weight_diff
+
+        # Add simple node distance (paper doesn't specify, but needed for completeness)
+        node_distance = _node_distance_simple(genome1, genome2, config)
+
+        return connection_distance + node_distance
+    else
+        # One genome has connections, the other doesn't - all are excess
+        N = max(length(conn1), length(conn2))
+        connection_distance = (config.compatibility_excess_coefficient * N) / N
+        node_distance = _node_distance_simple(genome1, genome2, config)
+        return connection_distance + node_distance
+    end
+end
+
+"""
+Helper function for simple node distance calculation.
+The NEAT paper doesn't specify how to handle node gene distance,
+so we use a simplified approach.
+"""
+function _node_distance_simple(genome1::Genome, genome2::Genome, config::GenomeConfig)
+    if isempty(genome1.nodes) && isempty(genome2.nodes)
+        return 0.0
     end
 
-    return node_distance + connection_distance
+    disjoint_nodes = 0
+    weight_diff = 0.0
+    matching = 0
+
+    # Count disjoint nodes in genome2
+    for k2 in keys(genome2.nodes)
+        if !haskey(genome1.nodes, k2)
+            disjoint_nodes += 1
+        end
+    end
+
+    # Count disjoint nodes in genome1 and compute attribute differences
+    for (k1, n1) in genome1.nodes
+        n2 = get(genome2.nodes, k1, nothing)
+        if n2 === nothing
+            disjoint_nodes += 1
+        else
+            # For matching nodes, compute attribute distance
+            weight_diff += abs(n1.bias - n2.bias) + abs(n1.response - n2.response)
+            if n1.activation != n2.activation
+                weight_diff += 1.0
+            end
+            if n1.aggregation != n2.aggregation
+                weight_diff += 1.0
+            end
+            matching += 1
+        end
+    end
+
+    avg_weight_diff = matching > 0 ? weight_diff / matching : 0.0
+    N = max(length(genome1.nodes), length(genome2.nodes))
+    N = max(N, 1)
+
+    # Use disjoint coefficient for nodes (treating all non-matching as disjoint)
+    return (config.compatibility_disjoint_coefficient * disjoint_nodes) / N +
+           config.compatibility_weight_coefficient * avg_weight_diff
 end
