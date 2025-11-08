@@ -92,7 +92,9 @@ See [examples/xor/](examples/xor/) for a complete working example.
 📖 **[XOR Example Walkthrough](docs/xor_example.md)** - Complete tutorial
 📖 **[API Reference](docs/api_reference.md)** - Complete API documentation
 📖 **[Activation Functions](docs/activation_functions.md)** - Available activation functions
-📖 **[Visualization Guide](docs/VISUALIZATION_PLAN.md)** - Advanced visualization features
+📖 **[Aggregation Functions](docs/aggregation_functions.md)** - Aggregation function reference
+📖 **[Algorithm Internals](docs/algorithm_internals.md)** - Deep dive into NEAT mechanics
+📖 **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
 📖 **[Migration Guide v0→v1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v1.0.0
 
 ## Example: Solving XOR
@@ -125,21 +127,50 @@ println("Solution found! Fitness: ", winner.fitness)
 
 ## Visualization
 
+### Static Visualization (Plots.jl)
+
 Optional visualization support through Plots.jl:
 
 ```julia
 using NEAT
-using Plots  # Enables visualization
+using Plots  # Enables static visualization
 
 stats = StatisticsReporter()
 add_reporter!(pop, stats)
 winner = run!(pop, eval_genomes, 100)
 
-# Generate visualizations
+# Generate static visualizations
 plot_fitness(stats, filename="fitness.png")
 plot_species(stats, filename="species.png")
 draw_net(winner, config.genome_config, filename="network.png")
+plot_activation_heatmap(winner, config.genome_config, filename="heatmap.png")
+animate_evolution(stats, config.genome_config, filename="evolution.gif")
 ```
+
+### Interactive Visualization (GraphMakie)
+
+For interactive 3D network visualization with rotation, zoom, and pan:
+
+```julia
+using NEAT
+using GLMakie, GraphMakie, Graphs  # Enables interactive visualization
+
+# Create interactive network visualization
+fig = draw_network_interactive(winner, config.genome_config,
+    layout=:spring,
+    title="Interactive Network"
+)
+display(fig)  # Opens interactive window
+
+# Compare multiple networks interactively
+top3 = best_genomes(stats, 3)
+fig = draw_network_comparison_interactive(top3, config.genome_config,
+    labels=["Best", "2nd", "3rd"]
+)
+display(fig)
+```
+
+See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 
 ## Version History
 

@@ -143,4 +143,32 @@ Creates a GIF showing how the best network evolves over time, including:
 """
 function animate_evolution end
 
+"""
+    draw_network_interactive(genome, config; layout=:spring, kwargs...)
+
+Create an interactive 3D visualization of a neural network using GraphMakie.
+
+Requires: `using GLMakie, GraphMakie, Graphs`
+
+# Interactive Features
+- Rotate, zoom, and pan the view
+- Drag nodes to rearrange
+- See weight information
+- Multiple layout algorithms
+
+See `NEATGraphMakieExt` extension for full documentation.
+"""
+function draw_network_interactive end
+
+"""
+    draw_network_comparison_interactive(genomes, config; labels=nothing, kwargs...)
+
+Create an interactive side-by-side comparison of multiple genome networks.
+
+Requires: `using GLMakie, GraphMakie, Graphs`
+
+See `NEATGraphMakieExt` extension for full documentation.
+"""
+function draw_network_comparison_interactive end
+
 end # module NEAT
