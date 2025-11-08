@@ -3,21 +3,218 @@
 [![CI](https://github.com/CodeReclaimers/NEAT.jl/actions/workflows/CI.yaml/badge.svg)](https://github.com/CodeReclaimers/NEAT.jl/actions/workflows/CI.yaml)
 [![codecov](https://codecov.io/gh/CodeReclaimers/NEAT.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/CodeReclaimers/NEAT.jl)
 
-NeuroEvolution of Augmenting Topologies (NEAT) implementation in Julia.
+A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), the evolutionary algorithm that creates artificial neural networks.
 
-## About
+## Overview
 
-What this library is (or could be):
-- A good way to run ad-hoc evolution experiments to determine their feasibility
-- A starting point for building a custom neuroevolution solution based on your application
+NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural networks. This implementation is compliant with the original [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf) and provides a robust platform for neuroevolution experiments.
 
-What this library is not:
-- A quick-start platform to build your game on top of
+**What this library is:**
+- A faithful implementation of the NEAT algorithm (v1.0.0)
+- A flexible platform for neuroevolution experiments
+- A starting point for custom neuroevolution solutions
+
+**What this library is not:**
+- A game development framework
+- A replacement for gradient-based deep learning
 
 ## Features
 
-- Complete NEAT algorithm implementation
-- Statistics collection and visualization (optional Plots.jl integration)
-- Comprehensive test suite (226 tests)
-- XOR example with visualization
+✅ **Paper-Compliant NEAT Algorithm**
+- Innovation number tracking for proper gene alignment
+- Correct compatibility distance formula (Equation 1 from paper)
+- 75% crossover disable rule per original specification
+- Speciation with genomic distance
 
+✅ **Complete Functionality**
+- Feed-forward and recurrent networks
+- 18 built-in activation functions
+- 7 aggregation functions
+- Multiple initial connection strategies
+- Comprehensive mutation operators
+
+✅ **Visualization** (Optional)
+- Fitness evolution plots
+- Species dynamics visualization
+- Network topology diagrams
+- Activation heatmaps for 2D problems
+- Evolution animations (GIF)
+
+✅ **Quality Assurance**
+- 236 passing tests
+- Code coverage reporting
+- Continuous integration
+- Migration guides for version updates
+
+## Quick Start
+
+### Installation
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
+```
+
+### Basic Example
+
+```julia
+using NEAT
+
+# Define your fitness function
+function eval_genomes(genomes, config)
+    for (genome_id, genome) in genomes
+        net = FeedForwardNetwork(genome, config.genome_config)
+        # Evaluate your problem
+        score = your_evaluation_function(net)
+        genome.fitness = score
+    end
+end
+
+# Load configuration
+config = load_config("config.toml")
+
+# Create and run population
+pop = Population(config)
+add_reporter!(pop, StdOutReporter(true))
+winner = run!(pop, eval_genomes, 100)
+
+# Use the winner
+net = FeedForwardNetwork(winner, config.genome_config)
+output = activate!(net, [1.0, 0.0])
+```
+
+See [examples/xor/](examples/xor/) for a complete working example.
+
+## Documentation
+
+📖 **[Getting Started Guide](docs/getting_started.md)** - Learn the basics
+📖 **[Configuration Reference](docs/config_file.md)** - All configuration parameters
+📖 **[XOR Example Walkthrough](docs/xor_example.md)** - Complete tutorial
+📖 **[API Reference](docs/api_reference.md)** - Complete API documentation
+📖 **[Activation Functions](docs/activation_functions.md)** - Available activation functions
+📖 **[Visualization Guide](docs/VISUALIZATION_PLAN.md)** - Advanced visualization features
+📖 **[Migration Guide v0→v1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v1.0.0
+
+## Example: Solving XOR
+
+```julia
+using NEAT
+
+# XOR test cases
+const XOR_INPUTS = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]]
+const XOR_OUTPUTS = [[0.0], [1.0], [1.0], [0.0]]
+
+function eval_genomes(genomes, config)
+    for (genome_id, genome) in genomes
+        genome.fitness = 4.0
+        net = FeedForwardNetwork(genome, config.genome_config)
+        for (xi, xo) in zip(XOR_INPUTS, XOR_OUTPUTS)
+            output = activate!(net, xi)
+            genome.fitness -= (output[1] - xo[1])^2
+        end
+    end
+end
+
+config = load_config("examples/xor/config.toml")
+pop = Population(config)
+add_reporter!(pop, StdOutReporter(true))
+winner = run!(pop, eval_genomes, 100)
+
+println("Solution found! Fitness: ", winner.fitness)
+```
+
+## Visualization
+
+Optional visualization support through Plots.jl:
+
+```julia
+using NEAT
+using Plots  # Enables visualization
+
+stats = StatisticsReporter()
+add_reporter!(pop, stats)
+winner = run!(pop, eval_genomes, 100)
+
+# Generate visualizations
+plot_fitness(stats, filename="fitness.png")
+plot_species(stats, filename="species.png")
+draw_net(winner, config.genome_config, filename="network.png")
+```
+
+## Version History
+
+**v1.0.0** (Current) - NEAT Paper Compliance
+- ✅ Innovation numbers implemented
+- ✅ Crossover disable rule fixed (75%)
+- ✅ Compatibility distance formula corrected
+- ✅ All 3 phases of visualization complete
+- See [Migration Guide](docs/MIGRATION_v0_to_v1.md) for upgrading
+
+**v0.1.0** - Initial Implementation
+- Basic NEAT algorithm
+- Statistics and visualization (Phases 1-3)
+
+## Running Tests
+
+```julia
+using Pkg
+Pkg.test("NEAT")
+```
+
+All 236 tests should pass!
+
+## Examples
+
+### XOR Problem
+Located in `examples/xor/`:
+- `evolve.jl` - Basic evolution script
+- `evolve_with_visualization.jl` - With full visualization
+- `config.toml` - NEAT configuration
+
+Run with:
+```bash
+cd examples/xor
+julia --project=../.. evolve_with_visualization.jl
+```
+
+## Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+## Citation
+
+If you use NEAT.jl in your research, please cite the original NEAT paper:
+
+```bibtex
+@article{stanley2002evolving,
+  title={Evolving neural networks through augmenting topologies},
+  author={Stanley, Kenneth O and Miikkulainen, Risto},
+  journal={Evolutionary computation},
+  volume={10},
+  number={2},
+  pages={99--127},
+  year={2002},
+  publisher={MIT Press}
+}
+```
+
+## License
+
+This project is inspired by and follows the design of [neat-python](https://github.com/CodeReclaimers/neat-python).
+
+## Acknowledgments
+
+- Kenneth O. Stanley and Risto Miikkulainen for the original NEAT algorithm
+- The neat-python project for design inspiration
+- Julia community for the excellent language and ecosystem
+
+## See Also
+
+- **Original NEAT Paper**: [Evolving Neural Networks through Augmenting Topologies](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf)
+- **neat-python**: [GitHub](https://github.com/CodeReclaimers/neat-python) | [Documentation](https://neat-python.readthedocs.io/)
+- **Kenneth Stanley's Website**: [Homepage](http://www.cs.ucf.edu/~kstanley/)
