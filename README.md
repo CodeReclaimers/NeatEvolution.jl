@@ -1,7 +1,7 @@
 # NEAT.jl
 
 [![CI](https://github.com/CodeReclaimers/NEAT.jl/actions/workflows/CI.yaml/badge.svg)](https://github.com/CodeReclaimers/NEAT.jl/actions/workflows/CI.yaml)
-[![codecov](https://codecov.io/gh/CodeReclaimers/NEAT.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/CodeReclaimers/NEAT.jl)
+[![codecov](https://codecov.io/gh/CodeReclaimers/NEAT/graph/badge.svg?token=BMK6EVEC48)](https://codecov.io/gh/CodeReclaimers/NEAT)
 
 A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), the evolutionary algorithm that creates artificial neural networks.
 
