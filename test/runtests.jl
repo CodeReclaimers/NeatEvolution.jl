@@ -1302,149 +1302,154 @@ using Random
     end
 
     @testset "Interactive Visualization (with GraphMakie)" begin
-        # Only run if GraphMakie, GLMakie, and Graphs are available
-        try
-            using GLMakie
-            using GraphMakie
-            using Graphs
+        # Skip in CI environments - GLMakie requires display/graphics capabilities
+        if haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS")
+            @test_skip "Skipping GraphMakie tests in CI (requires display)"
+        else
+            # Only run if GraphMakie, GLMakie, and Graphs are available
+            try
+                using GLMakie
+                using GraphMakie
+                using Graphs
 
-            test_config_path = joinpath(@__DIR__, "test_config.toml")
-            config = load_config(test_config_path)
+                test_config_path = joinpath(@__DIR__, "test_config.toml")
+                config = load_config(test_config_path)
 
-            # Create a simple test genome
-            genome = Genome(1)
-            configure_new!(genome, config.genome_config)
+                # Create a simple test genome
+                genome = Genome(1)
+                configure_new!(genome, config.genome_config)
 
-            # Add a hidden node and some connections
-            add_node!(genome, config.genome_config, 1)
-            mutate_add_connection!(genome, config.genome_config)
+                # Add a hidden node and some connections
+                add_node!(genome, config.genome_config, 1)
+                mutate_add_connection!(genome, config.genome_config)
 
-            genome.fitness = 2.5
+                genome.fitness = 2.5
 
-            @testset "draw_network_interactive" begin
-                # Test basic interactive network visualization
-                fig = draw_network_interactive(genome, config.genome_config)
-                @test fig isa GLMakie.Figure
+                @testset "draw_network_interactive" begin
+                    # Test basic interactive network visualization
+                    fig = draw_network_interactive(genome, config.genome_config)
+                    @test fig isa GLMakie.Figure
 
-                # Test with different layouts
-                for layout in [:spring, :stress, :shell, :spectral, :circular]
+                    # Test with different layouts
+                    for layout in [:spring, :stress, :shell, :spectral, :circular]
+                        fig = draw_network_interactive(genome, config.genome_config,
+                                                         layout=layout)
+                        @test fig isa GLMakie.Figure
+                    end
+
+                    # Test with custom parameters
                     fig = draw_network_interactive(genome, config.genome_config,
-                                                     layout=layout)
+                                                     layout=:spring,
+                                                     node_size=30.0,
+                                                     edge_width_scale=2.0,
+                                                     show_disabled=true,
+                                                     prune_unused=false,
+                                                     title="Test Network",
+                                                     resolution=(800, 600))
+                    @test fig isa GLMakie.Figure
+
+                    # Test with custom node names
+                    node_names = Dict(
+                        config.genome_config.input_keys[1] => "Input 1",
+                        config.genome_config.input_keys[2] => "Input 2",
+                        config.genome_config.output_keys[1] => "Output"
+                    )
+                    fig = draw_network_interactive(genome, config.genome_config,
+                                                     node_names=node_names)
+                    @test fig isa GLMakie.Figure
+
+                    # Test with pruning
+                    fig = draw_network_interactive(genome, config.genome_config,
+                                                     prune_unused=true)
                     @test fig isa GLMakie.Figure
                 end
 
-                # Test with custom parameters
-                fig = draw_network_interactive(genome, config.genome_config,
-                                                 layout=:spring,
-                                                 node_size=30.0,
-                                                 edge_width_scale=2.0,
-                                                 show_disabled=true,
-                                                 prune_unused=false,
-                                                 title="Test Network",
-                                                 resolution=(800, 600))
-                @test fig isa GLMakie.Figure
+                @testset "draw_network_comparison_interactive" begin
+                    # Create multiple genomes for comparison
+                    genome1 = Genome(1)
+                    configure_new!(genome1, config.genome_config)
+                    genome1.fitness = 1.0
 
-                # Test with custom node names
-                node_names = Dict(
-                    config.genome_config.input_keys[1] => "Input 1",
-                    config.genome_config.input_keys[2] => "Input 2",
-                    config.genome_config.output_keys[1] => "Output"
-                )
-                fig = draw_network_interactive(genome, config.genome_config,
-                                                 node_names=node_names)
-                @test fig isa GLMakie.Figure
+                    genome2 = Genome(2)
+                    configure_new!(genome2, config.genome_config)
+                    add_node!(genome2, config.genome_config, 1)
+                    genome2.fitness = 2.0
 
-                # Test with pruning
-                fig = draw_network_interactive(genome, config.genome_config,
-                                                 prune_unused=true)
-                @test fig isa GLMakie.Figure
-            end
+                    genome3 = Genome(3)
+                    configure_new!(genome3, config.genome_config)
+                    add_node!(genome3, config.genome_config, 1)
+                    add_node!(genome3, config.genome_config, 2)
+                    genome3.fitness = 3.0
 
-            @testset "draw_network_comparison_interactive" begin
-                # Create multiple genomes for comparison
-                genome1 = Genome(1)
-                configure_new!(genome1, config.genome_config)
-                genome1.fitness = 1.0
+                    genomes = [genome1, genome2, genome3]
 
-                genome2 = Genome(2)
-                configure_new!(genome2, config.genome_config)
-                add_node!(genome2, config.genome_config, 1)
-                genome2.fitness = 2.0
+                    # Test basic comparison
+                    fig = draw_network_comparison_interactive(genomes, config.genome_config)
+                    @test fig isa GLMakie.Figure
 
-                genome3 = Genome(3)
-                configure_new!(genome3, config.genome_config)
-                add_node!(genome3, config.genome_config, 1)
-                add_node!(genome3, config.genome_config, 2)
-                genome3.fitness = 3.0
-
-                genomes = [genome1, genome2, genome3]
-
-                # Test basic comparison
-                fig = draw_network_comparison_interactive(genomes, config.genome_config)
-                @test fig isa GLMakie.Figure
-
-                # Test with labels
-                labels = ["Network 1", "Network 2", "Network 3"]
-                fig = draw_network_comparison_interactive(genomes, config.genome_config,
-                                                           labels=labels)
-                @test fig isa GLMakie.Figure
-
-                # Test with custom parameters
-                fig = draw_network_comparison_interactive(genomes, config.genome_config,
-                                                           labels=labels,
-                                                           layout=:stress,
-                                                           node_size=25.0,
-                                                           prune_unused=true,
-                                                           resolution=(1400, 700))
-                @test fig isa GLMakie.Figure
-
-                # Test with different layouts
-                for layout in [:spring, :circular, :stress]
+                    # Test with labels
+                    labels = ["Network 1", "Network 2", "Network 3"]
                     fig = draw_network_comparison_interactive(genomes, config.genome_config,
-                                                               layout=layout)
+                                                               labels=labels)
                     @test fig isa GLMakie.Figure
-                end
-            end
 
-            @testset "Interactive visualization with evolution" begin
-                # Run a small evolution and visualize
-                pop = Population(config)
-                stats = StatisticsReporter()
-                add_reporter!(pop, stats)
+                    # Test with custom parameters
+                    fig = draw_network_comparison_interactive(genomes, config.genome_config,
+                                                               labels=labels,
+                                                               layout=:stress,
+                                                               node_size=25.0,
+                                                               prune_unused=true,
+                                                               resolution=(1400, 700))
+                    @test fig isa GLMakie.Figure
 
-                function simple_eval(genomes, config)
-                    for (_, g) in genomes
-                        g.fitness = rand()
+                    # Test with different layouts
+                    for layout in [:spring, :circular, :stress]
+                        fig = draw_network_comparison_interactive(genomes, config.genome_config,
+                                                                   layout=layout)
+                        @test fig isa GLMakie.Figure
                     end
                 end
 
-                winner = run!(pop, simple_eval, 5)
+                @testset "Interactive visualization with evolution" begin
+                    # Run a small evolution and visualize
+                    pop = Population(config)
+                    stats = StatisticsReporter()
+                    add_reporter!(pop, stats)
 
-                # Test interactive visualization of winner
-                fig = draw_network_interactive(winner, config.genome_config,
-                                                 layout=:spring,
-                                                 title="Evolution Winner")
-                @test fig isa GLMakie.Figure
+                    function simple_eval(genomes, config)
+                        for (_, g) in genomes
+                            g.fitness = rand()
+                        end
+                    end
 
-                # Test comparison of top genomes
-                if length(stats.most_fit_genomes) >= 3
-                    top3 = stats.most_fit_genomes[1:3]
-                    fig = draw_network_comparison_interactive(top3, config.genome_config,
-                                                               labels=["Gen 1", "Gen 2", "Gen 3"])
+                    winner = run!(pop, simple_eval, 5)
+
+                    # Test interactive visualization of winner
+                    fig = draw_network_interactive(winner, config.genome_config,
+                                                     layout=:spring,
+                                                     title="Evolution Winner")
                     @test fig isa GLMakie.Figure
+
+                    # Test comparison of top genomes
+                    if length(stats.most_fit_genomes) >= 3
+                        top3 = stats.most_fit_genomes[1:3]
+                        fig = draw_network_comparison_interactive(top3, config.genome_config,
+                                                                   labels=["Gen 1", "Gen 2", "Gen 3"])
+                        @test fig isa GLMakie.Figure
+                    end
+                end
+
+                println("✓ All GraphMakie interactive visualization tests passed")
+
+            catch e
+                if isa(e, ArgumentError) && (occursin("Package GLMakie not found", string(e)) ||
+                                              occursin("Package GraphMakie not found", string(e)) ||
+                                              occursin("Package Graphs not found", string(e)))
+                    @test_skip "GraphMakie/GLMakie/Graphs not available, skipping interactive visualization tests"
+                else
+                    rethrow(e)
                 end
             end
-
-            println("✓ All GraphMakie interactive visualization tests passed")
-
-        catch e
-            if isa(e, ArgumentError) && (occursin("Package GLMakie not found", string(e)) ||
-                                          occursin("Package GraphMakie not found", string(e)) ||
-                                          occursin("Package Graphs not found", string(e)))
-                @test_skip "GraphMakie/GLMakie/Graphs not available, skipping interactive visualization tests"
-            else
-                rethrow(e)
-            end
-        end
+        end  # end else (not in CI)
     end
 end
