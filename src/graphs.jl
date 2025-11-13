@@ -72,13 +72,33 @@ end
 """
 Compute feed-forward layers for parallel evaluation.
 Returns a vector of layers, where each layer is a set of node IDs.
+
+Nodes with no incoming connections (which can occur after deletion mutations)
+are treated as "bias neurons" - they're always ready and placed in the first layer.
 """
 function feed_forward_layers(inputs::Vector{Int}, outputs::Vector{Int},
                              connections::Vector{Tuple{Int, Int}})
     required = required_for_output(inputs, outputs, connections)
 
+    # Find required nodes that have no incoming connections
+    # These are "bias neurons" that output activation(bias) independent of inputs
+    nodes_with_inputs = Set{Int}()
+    for (a, b) in connections
+        push!(nodes_with_inputs, b)
+    end
+
+    # Bias neurons: required nodes with no incoming connections
+    bias_neurons = setdiff(required, nodes_with_inputs)
+
     layers = Vector{Set{Int}}()
+    # Start with inputs AND bias neurons in the ready set
     s = Set{Int}(inputs)
+    union!(s, bias_neurons)
+
+    # If there are bias neurons, add them as the first layer
+    if !isempty(bias_neurons)
+        push!(layers, copy(bias_neurons))
+    end
 
     while true
         # Find candidate nodes for next layer

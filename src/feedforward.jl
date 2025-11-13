@@ -55,8 +55,18 @@ function FeedForwardNetwork(genome::Genome, config::GenomeConfig)
 
     # Initialize values dict
     values = Dict{Int, Float64}()
-    for key in vcat(config.input_keys, config.output_keys)
+    # Include inputs, outputs, and all nodes in the evaluation order
+    for key in config.input_keys
         values[key] = 0.0
+    end
+    for key in config.output_keys
+        values[key] = 0.0
+    end
+    # Also initialize values for nodes in the evaluation list
+    for (node, _, _, _, _, _) in node_evals
+        if !haskey(values, node)
+            values[node] = 0.0
+        end
     end
 
     FeedForwardNetwork(config.input_keys, config.output_keys, node_evals, values)

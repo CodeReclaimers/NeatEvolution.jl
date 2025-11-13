@@ -274,6 +274,66 @@ using Random
                 end
             end
         end
+
+        @testset "Nodes with no inputs (orphaned nodes)" begin
+            # Test that orphaned nodes (no incoming connections) are handled correctly
+            # These can occur after deletion mutations
+
+            # Test 1: Single orphaned hidden node feeding output
+            inputs = [-1]
+            outputs = [0]
+            connections = [(1, 0)]  # Hidden node 1 -> output, but 1 has no inputs
+
+            required = required_for_output(inputs, outputs, connections)
+            @test 0 in required
+            @test 1 in required  # Node 1 is required even though it has no inputs
+
+            layers = feed_forward_layers(inputs, outputs, connections)
+            @test length(layers) == 2
+            @test 1 in layers[1]  # Orphaned node in first layer (as bias neuron)
+            @test 0 in layers[2]  # Output in second layer
+
+            # Test 2: Multiple orphaned nodes
+            inputs = [-1, -2]
+            outputs = [0]
+            connections = [(1, 0), (2, 0)]  # Two orphans feeding output
+
+            required = required_for_output(inputs, outputs, connections)
+            @test 1 in required
+            @test 2 in required
+
+            layers = feed_forward_layers(inputs, outputs, connections)
+            @test 1 in layers[1]
+            @test 2 in layers[1]
+            @test 0 in layers[2]
+
+            # Test 3: Mixed - some nodes with inputs, some without
+            inputs = [-1]
+            outputs = [0]
+            connections = [(-1, 2), (1, 0), (2, 0)]  # Node 1 orphaned, node 2 has input
+
+            required = required_for_output(inputs, outputs, connections)
+            @test 1 in required  # Orphan
+            @test 2 in required  # Normal
+
+            layers = feed_forward_layers(inputs, outputs, connections)
+            @test length(layers) == 3
+            @test 1 in layers[1]  # Orphan in first layer
+            @test 2 in layers[2]  # Normal node in second layer (after inputs)
+            @test 0 in layers[3]  # Output in third layer
+
+            # Test 4: Orphaned output node
+            inputs = [-1]
+            outputs = [0]
+            connections = Tuple{Int, Int}[]  # No connections at all!
+
+            required = required_for_output(inputs, outputs, connections)
+            @test 0 in required
+
+            layers = feed_forward_layers(inputs, outputs, connections)
+            @test length(layers) == 1
+            @test 0 in layers[1]  # Output node with no inputs in first layer
+        end
     end
 
     @testset "Feed-Forward Network Evaluation" begin
@@ -321,6 +381,69 @@ using Random
             @test net.values[-1] == 0.4
             @test result[1] ≈ 0.8808 atol=0.001
             @test result[1] == net.values[0]
+        end
+
+        @testset "Orphaned node integration test" begin
+            # Test network with orphaned (no-input) node created from genome
+            config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+            config = load_config(config_path)
+
+            genome = Genome(1)
+
+            # Add output node
+            output_node = NodeGene(0)
+            output_node.bias = 0.0
+            output_node.response = 1.0
+            output_node.activation = :sigmoid
+            output_node.aggregation = :sum
+            genome.nodes[0] = output_node
+
+            # Add orphaned hidden node (no incoming connections)
+            hidden_node = NodeGene(1)
+            hidden_node.bias = 3.0  # Will output sigmoid(5*3.0) due to 5x scaling
+            hidden_node.response = 1.0
+            hidden_node.activation = :sigmoid
+            hidden_node.aggregation = :sum
+            genome.nodes[1] = hidden_node
+
+            # Hidden -> output (weight=2.0)
+            conn_key = (1, 0)
+            conn = ConnectionGene(conn_key, 1)
+            conn.weight = 2.0
+            conn.enabled = true
+            genome.connections[conn_key] = conn
+
+            # Input -1 -> output (weight=1.0)
+            conn_key2 = (-1, 0)
+            conn2 = ConnectionGene(conn_key2, 2)
+            conn2.weight = 1.0
+            conn2.enabled = true
+            genome.connections[conn_key2] = conn2
+
+            # Create network
+            net = FeedForwardNetwork(genome, config.genome_config)
+
+            # Network should have 2 node evals: hidden (orphan) and output
+            @test length(net.node_evals) == 2
+
+            # Verify orphan node has no inputs
+            orphan_eval = net.node_evals[1]
+            @test orphan_eval[1] == 1  # Node ID
+            @test orphan_eval[4] == 3.0  # Bias
+            @test isempty(orphan_eval[6])  # No input links
+
+            # Activate network
+            output = activate!(net, [1.0, 0.5])
+
+            # Expected calculation:
+            # Hidden (node 1): sigmoid_activation(3.0) = sigmoid(5*3.0) = sigmoid(15.0)
+            hidden_val = 1.0 / (1.0 + exp(-15.0))
+            # Output: sigmoid_activation(0.5*1.0 + hidden_val*2.0)
+            sum_val = 0.5 * 1.0 + hidden_val * 2.0
+            expected = 1.0 / (1.0 + exp(-5.0 * sum_val))
+
+            @test output[1] ≈ expected atol=1e-6
+            @test net.values[1] ≈ hidden_val atol=1e-6
         end
     end
 
