@@ -1452,4 +1452,335 @@ using Random
             end
         end  # end else (not in CI)
     end
+
+    @testset "JSON Export and Import" begin
+        # Load config
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+
+        # Create a simple genome for testing
+        genome = Genome(1)
+        genome.fitness = 2.5
+
+        # Add some nodes
+        node0 = NodeGene(0)
+        node0.bias = 0.5
+        node0.response = 1.0
+        node0.activation = :sigmoid
+        node0.aggregation = :sum
+        genome.nodes[0] = node0
+
+        node1 = NodeGene(1)
+        node1.bias = -0.3
+        node1.response = 1.0
+        node1.activation = :tanh
+        node1.aggregation = :sum
+        genome.nodes[1] = node1
+
+        # Add a connection
+        conn_key = (-1, 0)
+        conn = ConnectionGene(conn_key, 1)
+        conn.weight = 1.5
+        conn.enabled = true
+        genome.connections[conn_key] = conn
+
+        # Test export to JSON
+        temp_file = tempname() * ".json"
+        try
+            export_network_json(genome, config.genome_config, temp_file)
+
+            # Verify file was created
+            @test isfile(temp_file)
+
+            # Test import from JSON
+            imported_genome = import_network_json(temp_file, config.genome_config)
+
+            # Verify basic properties
+            @test imported_genome.key == genome.key
+            @test imported_genome.fitness == genome.fitness
+
+            # Verify nodes
+            @test length(imported_genome.nodes) == length(genome.nodes)
+            @test haskey(imported_genome.nodes, 0)
+            @test haskey(imported_genome.nodes, 1)
+
+            # Verify node properties
+            imported_node0 = imported_genome.nodes[0]
+            @test imported_node0.bias == 0.5
+            @test imported_node0.response == 1.0
+            @test imported_node0.activation == :sigmoid
+            @test imported_node0.aggregation == :sum
+
+            imported_node1 = imported_genome.nodes[1]
+            @test imported_node1.bias == -0.3
+            @test imported_node1.activation == :tanh
+
+            # Verify connections
+            @test length(imported_genome.connections) == length(genome.connections)
+            @test haskey(imported_genome.connections, conn_key)
+
+            imported_conn = imported_genome.connections[conn_key]
+            @test imported_conn.weight == 1.5
+            @test imported_conn.enabled == true
+            @test imported_conn.innovation == 1
+
+            # Test round-trip with network
+            net1 = FeedForwardNetwork(genome, config.genome_config)
+            net2 = FeedForwardNetwork(imported_genome, config.genome_config)
+
+            test_input = [1.0, 0.5]
+            output1 = activate!(net1, test_input)
+            output2 = activate!(net2, test_input)
+
+            # Outputs should be identical
+            @test output1 ≈ output2
+
+        finally
+            # Clean up (use force=true for Windows compatibility)
+            if isfile(temp_file)
+                try
+                    rm(temp_file, force=true)
+                catch e
+                    @warn "Could not delete temp file: $temp_file" exception=e
+                end
+            end
+        end
+
+        # Test export_population_json
+        population = Dict{Int, Genome}()
+        for i in 1:5
+            g = Genome(i)
+            g.fitness = Float64(i)
+            population[i] = g
+        end
+
+        temp_pop_file = tempname() * ".json"
+        try
+            export_population_json(population, config.genome_config, temp_pop_file, top_n=3)
+
+            @test isfile(temp_pop_file)
+
+            # Read and verify
+            using JSON
+            data = JSON.parsefile(temp_pop_file)
+
+            @test data["count"] == 3  # Only top 3
+            @test length(data["genomes"]) == 3
+
+            # Check they're sorted by fitness (descending)
+            @test data["genomes"][1]["fitness"] == 5.0
+            @test data["genomes"][2]["fitness"] == 4.0
+            @test data["genomes"][3]["fitness"] == 3.0
+
+        finally
+            if isfile(temp_pop_file)
+                try
+                    rm(temp_pop_file, force=true)
+                catch e
+                    @warn "Could not delete temp file: $temp_pop_file" exception=e
+                end
+            end
+        end
+    end
+
+    @testset "Configuration Validation" begin
+        # Test with valid config (should load successfully)
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+        @test config !== nothing
+        @test config.genome_config.num_inputs == 2
+        @test config.genome_config.num_outputs == 1
+
+        # Test validation warnings for missing critical parameters
+        temp_config = tempname() * ".toml"
+        try
+            # Create minimal config missing num_inputs/num_outputs
+            open(temp_config, "w") do io
+                write(io, """
+                [NEAT]
+                pop_size = 100
+
+                [DefaultGenome]
+                feed_forward = true
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = 3.0
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            # Should warn about missing num_inputs/num_outputs but still work
+            @test_logs (:warn, r"Missing 'num_inputs'") (:warn, r"Missing 'num_outputs'") load_config(temp_config)
+
+        finally
+            if isfile(temp_config)
+                rm(temp_config)
+            end
+        end
+
+        # Test validation error for invalid fitness_criterion
+        temp_config2 = tempname() * ".toml"
+        try
+            open(temp_config2, "w") do io
+                write(io, """
+                [NEAT]
+                fitness_criterion = "invalid"
+                pop_size = 100
+
+                [DefaultGenome]
+                num_inputs = 2
+                num_outputs = 1
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = 3.0
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            @test_throws ErrorException load_config(temp_config2)
+
+        finally
+            if isfile(temp_config2)
+                rm(temp_config2)
+            end
+        end
+
+        # Test validation warning for unknown parameter
+        temp_config3 = tempname() * ".toml"
+        try
+            open(temp_config3, "w") do io
+                write(io, """
+                [NEAT]
+                pop_size = 100
+                popsize = 50  # Typo - should trigger warning
+
+                [DefaultGenome]
+                num_inputs = 2
+                num_outputs = 1
+                compatability_threshold = 2.0  # Typo - should trigger warning
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = 3.0
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            # Should warn about typos
+            @test_logs (:warn, r"popsize") (:warn, r"compatability_threshold") match_mode=:any load_config(temp_config3)
+
+        finally
+            if isfile(temp_config3)
+                rm(temp_config3)
+            end
+        end
+
+        # Test validation error for invalid activation_options
+        temp_config4 = tempname() * ".toml"
+        try
+            open(temp_config4, "w") do io
+                write(io, """
+                [NEAT]
+                pop_size = 100
+
+                [DefaultGenome]
+                num_inputs = 2
+                num_outputs = 1
+                activation_options = []  # Empty array - should error
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = 3.0
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            @test_throws ErrorException load_config(temp_config4)
+
+        finally
+            if isfile(temp_config4)
+                rm(temp_config4)
+            end
+        end
+
+        # Test validation error for negative compatibility_threshold
+        temp_config5 = tempname() * ".toml"
+        try
+            open(temp_config5, "w") do io
+                write(io, """
+                [NEAT]
+                pop_size = 100
+
+                [DefaultGenome]
+                num_inputs = 2
+                num_outputs = 1
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = -1.0  # Invalid - must be positive
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            @test_throws ErrorException load_config(temp_config5)
+
+        finally
+            if isfile(temp_config5)
+                rm(temp_config5)
+            end
+        end
+
+        # Test validation warning for very small population
+        temp_config6 = tempname() * ".toml"
+        try
+            open(temp_config6, "w") do io
+                write(io, """
+                [NEAT]
+                pop_size = 5  # Very small - should warn
+
+                [DefaultGenome]
+                num_inputs = 2
+                num_outputs = 1
+
+                [DefaultSpeciesSet]
+                compatibility_threshold = 3.0
+
+                [DefaultStagnation]
+                species_fitness_func = "max"
+
+                [DefaultReproduction]
+                elitism = 2
+                """)
+            end
+
+            @test_logs (:warn, r"Population size \(5\) is very small") match_mode=:any load_config(temp_config6)
+
+        finally
+            if isfile(temp_config6)
+                rm(temp_config6)
+            end
+        end
+    end
 end

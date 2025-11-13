@@ -241,6 +241,9 @@ function load_config(filename::String)
 
     config_data = symbolize_keys(data)
 
+    # Validate configuration with enhanced error checking
+    validate_config(config_data)
+
     # Extract main NEAT parameters
     neat_params = get(config_data, :neat, Dict())
 

@@ -9,10 +9,12 @@ module NEAT
 using Random
 using Statistics
 using TOML
+using JSON
 
 # Include all components
 include("utils.jl")
 include("attributes.jl")
+include("validation.jl")
 include("genes.jl")
 include("activations.jl")
 include("aggregations.jl")
@@ -26,6 +28,7 @@ include("reporting.jl")
 include("statistics.jl")
 include("feedforward.jl")
 include("population.jl")
+include("export.jl")
 
 # Export main types
 export Config, load_config
@@ -39,6 +42,9 @@ export Reporter, StdOutReporter, StatisticsReporter
 export run!, activate!
 export add_reporter!
 export configure_new!, configure_crossover!, mutate!
+
+# Export JSON import/export functions
+export export_network_json, import_network_json, export_population_json
 
 # Export activation functions
 export sigmoid_activation, tanh_activation, relu_activation

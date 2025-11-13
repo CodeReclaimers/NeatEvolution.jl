@@ -32,6 +32,7 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - 7 aggregation functions
 - Multiple initial connection strategies
 - Comprehensive mutation operators
+- JSON export/import for model sharing
 
 ✅ **Visualization** (Optional)
 - Fitness evolution plots
@@ -41,9 +42,10 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - Evolution animations (GIF)
 
 ✅ **Quality Assurance**
-- 236 passing tests
+- 269 passing tests
 - Code coverage reporting
 - Continuous integration
+- Comprehensive troubleshooting guide
 - Migration guides for version updates
 
 ## Quick Start
@@ -95,6 +97,8 @@ See [examples/xor/](examples/xor/) for a complete working example.
 📖 **[Aggregation Functions](docs/aggregation_functions.md)** - Aggregation function reference
 📖 **[Algorithm Internals](docs/algorithm_internals.md)** - Deep dive into NEAT mechanics
 📖 **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
+📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Common problems and solutions
+📖 **[FAQ](docs/faq.md)** - Frequently asked questions
 📖 **[Migration Guide v0→v1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v1.0.0
 
 ## Example: Solving XOR
@@ -174,11 +178,14 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 
 ## Version History
 
-**v1.0.0** (Current) - NEAT Paper Compliance
+**v1.0.0** (Current) - NEAT Paper Compliance + Enhancements
 - ✅ Innovation numbers implemented
 - ✅ Crossover disable rule fixed (75%)
 - ✅ Compatibility distance formula corrected
 - ✅ All 3 phases of visualization complete
+- ✅ JSON export/import for model sharing
+- ✅ Stricter configuration validation with typo detection
+- ✅ Comprehensive troubleshooting guide and FAQ
 - See [Migration Guide](docs/MIGRATION_v0_to_v1.md) for upgrading
 
 **v0.1.0** - Initial Implementation
@@ -192,7 +199,7 @@ using Pkg
 Pkg.test("NEAT")
 ```
 
-All 236 tests should pass!
+All 269 tests should pass!
 
 ## Examples
 
