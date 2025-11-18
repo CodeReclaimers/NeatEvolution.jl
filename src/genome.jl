@@ -237,18 +237,22 @@ function mutate!(genome::Genome, config::GenomeConfig, rng::AbstractRNG=Random.G
         # Only one structural mutation per call
         div = config.node_add_prob + config.node_delete_prob +
               config.conn_add_prob + config.conn_delete_prob
-        div = max(1.0, div)
 
-        r = rand(rng)
-        if r < config.node_add_prob / div
-            mutate_add_node!(genome, config, rng)
-        elseif r < (config.node_add_prob + config.node_delete_prob) / div
-            mutate_delete_node!(genome, config, rng)
-        elseif r < (config.node_add_prob + config.node_delete_prob +
-                    config.conn_add_prob) / div
-            mutate_add_connection!(genome, config, rng)
-        elseif r < 1.0
-            mutate_delete_connection!(genome, config, rng)
+        # Only perform structural mutation if at least one probability is non-zero
+        if div > 0.0
+            div = max(1.0, div)
+
+            r = rand(rng)
+            if r < config.node_add_prob / div
+                mutate_add_node!(genome, config, rng)
+            elseif r < (config.node_add_prob + config.node_delete_prob) / div
+                mutate_delete_node!(genome, config, rng)
+            elseif r < (config.node_add_prob + config.node_delete_prob +
+                        config.conn_add_prob) / div
+                mutate_add_connection!(genome, config, rng)
+            elseif r < 1.0
+                mutate_delete_connection!(genome, config, rng)
+            end
         end
     else
         # Multiple structural mutations possible
