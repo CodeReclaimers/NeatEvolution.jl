@@ -82,8 +82,8 @@ function NEAT.draw_network_interactive(genome::NEAT.Genome,
                                         resolution::Tuple{Int,Int}=(1200, 800))
 
     # Get node lists
-    inputs = collect(keys(config.input_keys))
-    outputs = collect(keys(config.output_keys))
+    inputs = config.input_keys
+    outputs = config.output_keys
 
     # Build connection list
     connections = Tuple{Int,Int}[]
@@ -354,8 +354,8 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
 
         # Recreate the graph plot in this axis
         # (Similar logic to draw_network_interactive but in this specific axis)
-        inputs = collect(keys(config.input_keys))
-        outputs = collect(keys(config.output_keys))
+        inputs = config.input_keys
+        outputs = config.output_keys
 
         connections = Tuple{Int,Int}[]
         weights = Float64[]

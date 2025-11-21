@@ -76,6 +76,7 @@ export save_statistics
 export plot_fitness, plot_species, plot_fitness_comparison
 export draw_net, draw_net_comparison
 export plot_activation_heatmap, plot_activation_comparison, animate_evolution
+export draw_network_interactive, draw_network_comparison_interactive
 
 # Function stubs for Plots.jl extension
 """

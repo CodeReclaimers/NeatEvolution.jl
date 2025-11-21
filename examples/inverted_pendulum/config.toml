@@ -1,0 +1,90 @@
+# Inverted Pendulum (CartPole) Configuration for NEAT
+# Evolves a controller to balance a pole on a moving cart
+
+[NEAT]
+pop_size = 150
+fitness_criterion = "max"
+fitness_threshold = 500.0  # Maximum score for CartPole-v1
+reset_on_extinction = true
+no_fitness_termination = false
+
+[DefaultGenome]
+# Network structure
+# CartPole-v1 has 4 observations: cart position, cart velocity, pole angle, pole velocity
+# Output: single value used to determine action (left/right)
+num_inputs = 4
+num_outputs = 1
+num_hidden = 0
+feed_forward = true
+initial_connection = "full"
+
+# Compatibility coefficients (per NEAT paper Equation 1)
+# δ = (c₁·E)/N + (c₂·D)/N + c₃·W̄
+compatibility_excess_coefficient = 1.0     # c₁ - coefficient for excess genes
+compatibility_disjoint_coefficient = 1.0   # c₂ - coefficient for disjoint genes
+compatibility_weight_coefficient = 0.5     # c₃ - coefficient for weight differences
+
+# Structural mutation probabilities
+conn_add_prob = 0.5
+conn_delete_prob = 0.3
+node_add_prob = 0.3
+node_delete_prob = 0.2
+single_structural_mutation = false
+
+# Node activation options
+# tanh works well for control problems
+activation_default = "tanh"
+activation_mutate_rate = 0.1
+activation_options = ["tanh", "sigmoid", "relu", "identity"]
+
+# Node aggregation options
+aggregation_default = "sum"
+aggregation_mutate_rate = 0.0
+aggregation_options = ["sum"]
+
+# Node bias options
+bias_init_mean = 0.0
+bias_init_stdev = 1.0
+bias_init_type = "gaussian"
+bias_max_value = 30.0
+bias_min_value = -30.0
+bias_mutate_power = 0.5
+bias_mutate_rate = 0.7
+bias_replace_rate = 0.1
+
+# Node response options
+response_init_mean = 1.0
+response_init_stdev = 0.0
+response_init_type = "gaussian"
+response_max_value = 30.0
+response_min_value = -30.0
+response_mutate_power = 0.0
+response_mutate_rate = 0.0
+response_replace_rate = 0.0
+
+# Connection weight options
+weight_init_mean = 0.0
+weight_init_stdev = 1.0
+weight_init_type = "gaussian"
+weight_max_value = 30.0
+weight_min_value = -30.0
+weight_mutate_power = 0.5
+weight_mutate_rate = 0.8
+weight_replace_rate = 0.1
+
+# Connection enabled options
+enabled_default = "true"
+enabled_mutate_rate = 0.01
+
+[DefaultSpeciesSet]
+compatibility_threshold = 3.0
+
+[DefaultStagnation]
+species_fitness_func = "max"
+max_stagnation = 15
+species_elitism = 2
+
+[DefaultReproduction]
+elitism = 2
+survival_threshold = 0.2
+min_species_size = 2

@@ -1443,8 +1443,8 @@ using Random
                 configure_new!(genome, config.genome_config)
 
                 # Add a hidden node and some connections
-                add_node!(genome, config.genome_config, 1)
-                mutate_add_connection!(genome, config.genome_config)
+                NEAT.mutate_add_node!(genome, config.genome_config, Random.default_rng())
+                NEAT.mutate_add_connection!(genome, config.genome_config, Random.default_rng())
 
                 genome.fitness = 2.5
 
@@ -1495,13 +1495,13 @@ using Random
 
                     genome2 = Genome(2)
                     configure_new!(genome2, config.genome_config)
-                    add_node!(genome2, config.genome_config, 1)
+                    NEAT.mutate_add_node!(genome2, config.genome_config, Random.default_rng())
                     genome2.fitness = 2.0
 
                     genome3 = Genome(3)
                     configure_new!(genome3, config.genome_config)
-                    add_node!(genome3, config.genome_config, 1)
-                    add_node!(genome3, config.genome_config, 2)
+                    NEAT.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
+                    NEAT.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
                     genome3.fitness = 3.0
 
                     genomes = [genome1, genome2, genome3]
