@@ -142,6 +142,10 @@ try
     println("      (Close the window to continue)")
     display(fig_winner)
 
+    # Wait for user to close the window before continuing
+    println("      Press Enter to continue...")
+    readline()
+
     # Save a screenshot
     save("output/winner_interactive_screenshot.png", fig_winner)
     println("   ✓ Saved screenshot to output/winner_interactive_screenshot.png")
@@ -171,6 +175,10 @@ try
         println("   → Displaying network comparison...")
         println("      (Close the window to continue)")
         display(fig_comparison)
+
+        # Wait for user to close the window before continuing
+        println("      Press Enter to continue...")
+        readline()
 
         save("output/comparison_interactive_screenshot.png", fig_comparison)
         println("   ✓ Saved screenshot to output/comparison_interactive_screenshot.png")

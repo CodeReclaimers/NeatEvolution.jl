@@ -3,6 +3,7 @@ module NEATGraphMakieExt
 using NEAT
 using GLMakie
 using GraphMakie
+using GraphMakie.NetworkLayout
 using Graphs
 
 """
@@ -61,7 +62,8 @@ fig = draw_network_interactive(winner, config.genome_config,
 - `:stress` - Stress minimization (good for larger networks)
 - `:shell` - Concentric shells (good for hierarchical networks)
 - `:spectral` - Spectral layout (good for clustered networks)
-- `:circular` - Circular arrangement (good for small networks)
+- `:sfdp` - Scalable Force-Directed Placement (good for large graphs)
+- `:circular` - Alias for shell layout (concentric arrangement)
 
 # Interactive Features
 - **Left-click + drag**: Rotate view
@@ -132,7 +134,7 @@ function NEAT.draw_network_interactive(genome::NEAT.Genome,
     edge_to_enabled = Dict{Tuple{Int,Int}, Bool}()
 
     for (idx, (i, o)) in enumerate(connections)
-        if i in node_id_to_idx && o in node_id_to_idx
+        if haskey(node_id_to_idx, i) && haskey(node_id_to_idx, o)
             i_idx = node_id_to_idx[i]
             o_idx = node_id_to_idx[o]
             add_edge!(g, i_idx, o_idx)
@@ -227,7 +229,9 @@ function NEAT.draw_network_interactive(genome::NEAT.Genome,
     elseif layout == :spectral
         Spectral()
     elseif layout == :circular
-        Circular()
+        Shell()  # Use Shell as Circular equivalent
+    elseif layout == :sfdp
+        SFDP()
     else
         @warn "Unknown layout :$layout, using :spring"
         Spring()
@@ -378,7 +382,7 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
 
         g = SimpleDiGraph(length(all_nodes))
         for (i, o) in connections
-            if i in node_id_to_idx && o in node_id_to_idx
+            if haskey(node_id_to_idx, i) && haskey(node_id_to_idx, o)
                 add_edge!(g, node_id_to_idx[i], node_id_to_idx[o])
             end
         end
@@ -388,7 +392,7 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
         node_colors = [t == :input ? :green : (t == :output ? :blue : :lightgray)
                        for t in node_types]
 
-        layout_func = layout == :spring ? Spring() : (layout == :stress ? Stress() : Circular())
+        layout_func = layout == :spring ? Spring() : (layout == :stress ? Stress() : Shell())
 
         graphplot!(ax, g,
                    layout=layout_func,
