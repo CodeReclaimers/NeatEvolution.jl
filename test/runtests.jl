@@ -1025,6 +1025,61 @@ using Random
             # Should have added some connections
             @test length(g.connections) > 0
         end
+
+        @testset "Add node mutation - bias neutrality" begin
+            # Regression test for node bias initialization
+            # Ensures new nodes added via mutation have bias=0.0 per NEAT paper
+            Random.seed!(100)
+            temp_config = GenomeConfig(Dict(
+                :num_inputs => 2,
+                :num_outputs => 1,
+                :num_hidden => 0,
+                :initial_connection => :full,
+                :feed_forward => true,
+                :conn_add_prob => 0.0,
+                :node_add_prob => 1.0,  # Force node addition
+                :activation_default => "sigmoid",
+                :aggregation_default => "sum",
+                :activation_options => ["sigmoid"],
+                :aggregation_options => ["sum"],
+                :bias_init_mean => 5.0,  # Non-zero mean
+                :bias_init_stdev => 2.0,  # Non-zero stdev
+                :response_init_mean => 1.0,
+                :response_init_stdev => 0.0,
+                :weight_init_mean => 0.0,
+                :weight_init_stdev => 1.0,
+                :enabled_default => true
+            ))
+
+            g = Genome(1)
+            configure_new!(g, temp_config)
+
+            # Record initial nodes (should have output node 0)
+            initial_node_ids = Set(keys(g.nodes))
+
+            # Add multiple nodes via mutation
+            rng = Random.MersenneTwister(100)
+            for _ in 1:5
+                success = NEAT.mutate_add_node!(g, temp_config, rng)
+                if success
+                    # Find the newly added node(s)
+                    current_node_ids = Set(keys(g.nodes))
+                    new_node_ids = setdiff(current_node_ids, initial_node_ids)
+
+                    # Check that all newly added nodes have bias=0.0
+                    for node_id in new_node_ids
+                        node = g.nodes[node_id]
+                        @test node.bias == 0.0
+                    end
+
+                    # Update initial_node_ids for next iteration
+                    initial_node_ids = current_node_ids
+                end
+            end
+
+            # Verify we actually added some nodes
+            @test length(g.nodes) > 1
+        end
     end
 
     @testset "XOR Evolution (short run)" begin

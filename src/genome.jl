@@ -298,6 +298,7 @@ function mutate_add_node!(genome::Genome, config::GenomeConfig, rng::AbstractRNG
     new_node_id = get_new_node_id!(config)
     ng = NodeGene(new_node_id)
     init_attributes!(ng, config, rng)
+    ng.bias = 0.0  # Set to zero per NEAT paper to keep mutation neutral
     genome.nodes[new_node_id] = ng
 
     # Disable old connection
