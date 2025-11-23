@@ -450,6 +450,327 @@ include("test_genes.jl")
         end
     end
 
+    @testset "Feed-Forward Network Input Validation" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+
+        # Create a simple genome with 2 inputs, 1 output
+        genome = Genome(1)
+        configure_new!(genome, config.genome_config)
+
+        # Build network
+        net = FeedForwardNetwork(genome, config.genome_config)
+
+        # Test with correct number of inputs (should work)
+        inputs_correct = [1.0, 0.0]
+        output = activate!(net, inputs_correct)
+        @test length(output) == 1
+
+        # Test with too few inputs (should error)
+        inputs_too_few = [1.0]
+        @test_throws ErrorException activate!(net, inputs_too_few)
+
+        # Verify error message is informative
+        try
+            activate!(net, inputs_too_few)
+            @test false  # Should not reach here
+        catch e
+            @test occursin(r"Expected \d+ inputs?, got \d+", e.msg)
+        end
+
+        # Test with too many inputs (should error)
+        inputs_too_many = [1.0, 0.0, 0.5]
+        @test_throws ErrorException activate!(net, inputs_too_many)
+
+        # Test with empty inputs (should error)
+        inputs_empty = Float64[]
+        @test_throws ErrorException activate!(net, inputs_empty)
+    end
+
+    @testset "Feed-Forward Network Pruning" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+        rng = MersenneTwister(42)
+
+        # Manually construct a genome with an unreachable node
+        genome = Genome(1)
+
+        # Add output node (key 0)
+        output_node = NodeGene(0)
+        NEAT.init_attributes!(output_node, config.genome_config, rng)
+        genome.nodes[0] = output_node
+
+        # Add reachable hidden node (key 1)
+        hidden_reachable = NodeGene(1)
+        NEAT.init_attributes!(hidden_reachable, config.genome_config, rng)
+        genome.nodes[1] = hidden_reachable
+
+        # Add unreachable hidden node (key 2) - no path to output
+        hidden_unreachable = NodeGene(2)
+        NEAT.init_attributes!(hidden_unreachable, config.genome_config, rng)
+        genome.nodes[2] = hidden_unreachable
+
+        # Connect input -1 to reachable hidden node 1
+        conn1 = ConnectionGene((-1, 1), 1)
+        NEAT.init_attributes!(conn1, config.genome_config, rng)
+        genome.connections[(-1, 1)] = conn1
+
+        # Connect reachable hidden node 1 to output 0
+        conn2 = ConnectionGene((1, 0), 2)
+        NEAT.init_attributes!(conn2, config.genome_config, rng)
+        genome.connections[(1, 0)] = conn2
+
+        # Connect input -2 to unreachable hidden node 2
+        # (but node 2 doesn't connect to output, so it should be pruned)
+        conn3 = ConnectionGene((-2, 2), 3)
+        NEAT.init_attributes!(conn3, config.genome_config, rng)
+        genome.connections[(-2, 2)] = conn3
+
+        # Build network - should prune unreachable node 2
+        net = FeedForwardNetwork(genome, config.genome_config)
+
+        # Verify node 2 is not in the network's evaluation list
+        node_keys_in_network = [eval[1] for eval in net.node_evals]  # First element is node_id
+        @test 0 in node_keys_in_network  # Output should be present
+        @test 1 in node_keys_in_network  # Reachable hidden should be present
+        @test !(2 in node_keys_in_network)  # Unreachable hidden should be pruned
+
+        # Verify network still functions correctly
+        inputs = [1.0, 0.0]
+        output = activate!(net, inputs)
+        @test length(output) == 1
+        @test !isnan(output[1]) && !isinf(output[1])
+    end
+
+    @testset "Feed-Forward Network with Disabled Connections" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+        rng = MersenneTwister(123)
+
+        # Create a genome with some disabled connections
+        genome = Genome(1)
+
+        # Add output node
+        output_node = NodeGene(0)
+        NEAT.init_attributes!(output_node, config.genome_config, rng)
+        genome.nodes[0] = output_node
+
+        # Add hidden node
+        hidden_node = NodeGene(1)
+        NEAT.init_attributes!(hidden_node, config.genome_config, rng)
+        genome.nodes[1] = hidden_node
+
+        # Add enabled connection: input -1 -> hidden 1
+        conn1 = ConnectionGene((-1, 1), 1)
+        NEAT.init_attributes!(conn1, config.genome_config, rng)
+        conn1.weight = 1.0
+        conn1.enabled = true
+        genome.connections[(-1, 1)] = conn1
+
+        # Add enabled connection: hidden 1 -> output 0
+        conn2 = ConnectionGene((1, 0), 2)
+        NEAT.init_attributes!(conn2, config.genome_config, rng)
+        conn2.weight = 1.0
+        conn2.enabled = true
+        genome.connections[(1, 0)] = conn2
+
+        # Add disabled connection: input -2 -> output 0
+        # This should be ignored when building the network
+        conn3 = ConnectionGene((-2, 0), 3)
+        NEAT.init_attributes!(conn3, config.genome_config, rng)
+        conn3.weight = 10.0  # Large weight that would affect output if not disabled
+        conn3.enabled = false
+        genome.connections[(-2, 0)] = conn3
+
+        # Build network
+        net = FeedForwardNetwork(genome, config.genome_config)
+
+        # Test that input -2 doesn't affect output (connection is disabled)
+        output1 = activate!(net, [1.0, 0.0])
+        output2 = activate!(net, [1.0, 1.0])
+
+        # If the disabled connection were active, output2 would be significantly different
+        # But since it's disabled, only the path through node 1 matters
+        @test !isnan(output1[1]) && !isinf(output1[1])
+        @test !isnan(output2[1]) && !isinf(output2[1])
+
+        # Verify that the disabled connection is not in the network structure
+        # Check that node 0's inputs don't include a direct connection from input -2
+        output_eval = net.node_evals[end]  # Output should be last
+        @test output_eval[1] == 0  # First element is node_id
+
+        # The output should only receive input from hidden node 1, not directly from input -2
+        # Sixth element (index 6) contains the input links as Vector{Tuple{Int, Float64}}
+        input_sources = [link[1] for link in output_eval[6]]  # First element of each link is input_id
+        @test 1 in input_sources  # Should have input from hidden node 1
+        @test !(-2 in input_sources)  # Should NOT have direct input from -2
+    end
+
+    @testset "Network with Self-Connections" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+
+        # Check if the config allows recurrent networks
+        # If feed_forward is true, skip this test or modify config temporarily
+        if config.genome_config.feed_forward
+            @info "Skipping self-connection test (feed_forward=true in config)"
+        else
+            rng = MersenneTwister(456)
+
+            # Create genome with self-connection
+            genome = Genome(1)
+
+            output_node = NodeGene(0)
+            NEAT.init_attributes!(output_node, config.genome_config, rng)
+            genome.nodes[0] = output_node
+
+            hidden_node = NodeGene(1)
+            NEAT.init_attributes!(hidden_node, config.genome_config, rng)
+            genome.nodes[1] = hidden_node
+
+            # Input -> hidden
+            conn1 = ConnectionGene((-1, 1), 1)
+            NEAT.init_attributes!(conn1, config.genome_config, rng)
+            genome.connections[(-1, 1)] = conn1
+
+            # Hidden -> output
+            conn2 = ConnectionGene((1, 0), 2)
+            NEAT.init_attributes!(conn2, config.genome_config, rng)
+            genome.connections[(1, 0)] = conn2
+
+            # Self-connection on hidden node
+            conn3 = ConnectionGene((1, 1), 3)
+            NEAT.init_attributes!(conn3, config.genome_config, rng)
+            genome.connections[(1, 1)] = conn3
+
+            # For feed-forward network, this should detect the cycle
+            @test_throws ErrorException FeedForwardNetwork(genome, config.genome_config)
+        end
+    end
+
+    @testset "Complex Multi-Layer Network" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+        rng = MersenneTwister(789)
+
+        # Build a 2-3-2-1 network (2 inputs, 3 hidden layer 1, 2 hidden layer 2, 1 output)
+        genome = Genome(1)
+
+        # Output layer (node 0)
+        output = NodeGene(0)
+        NEAT.init_attributes!(output, config.genome_config, rng)
+        genome.nodes[0] = output
+
+        # Hidden layer 2 (nodes 1, 2)
+        for i in 1:2
+            hidden2 = NodeGene(i)
+            NEAT.init_attributes!(hidden2, config.genome_config, rng)
+            genome.nodes[i] = hidden2
+        end
+
+        # Hidden layer 1 (nodes 3, 4, 5)
+        for i in 3:5
+            hidden1 = NodeGene(i)
+            NEAT.init_attributes!(hidden1, config.genome_config, rng)
+            genome.nodes[i] = hidden1
+        end
+
+        innovation = 1
+
+        # Connect inputs to hidden layer 1
+        for input_id in [-1, -2]
+            for hidden_id in 3:5
+                conn = ConnectionGene((input_id, hidden_id), innovation)
+                NEAT.init_attributes!(conn, config.genome_config, rng)
+                genome.connections[(input_id, hidden_id)] = conn
+                innovation += 1
+            end
+        end
+
+        # Connect hidden layer 1 to hidden layer 2
+        for h1_id in 3:5
+            for h2_id in 1:2
+                conn = ConnectionGene((h1_id, h2_id), innovation)
+                NEAT.init_attributes!(conn, config.genome_config, rng)
+                genome.connections[(h1_id, h2_id)] = conn
+                innovation += 1
+            end
+        end
+
+        # Connect hidden layer 2 to output
+        for h2_id in 1:2
+            conn = ConnectionGene((h2_id, 0), innovation)
+            NEAT.init_attributes!(conn, config.genome_config, rng)
+            genome.connections[(h2_id, 0)] = conn
+            innovation += 1
+        end
+
+        # Build and test network
+        net = FeedForwardNetwork(genome, config.genome_config)
+
+        # Verify all nodes are present (should have all layers)
+        node_keys = [eval[1] for eval in net.node_evals]  # First element is node_id
+        @test 0 in node_keys  # Output
+        @test all(i in node_keys for i in 1:2)  # Hidden layer 2
+        # Note: Some nodes in layer 1 may be pruned if they don't contribute to output
+        # This is normal NEAT behavior - unused nodes are removed
+        @test length(node_keys) >= 3  # At least output + some hidden nodes
+
+        # Test network evaluation
+        inputs = [0.5, -0.3]
+        output = activate!(net, inputs)
+        @test length(output) == 1
+        @test !isnan(output[1]) && !isinf(output[1])
+
+        # Test determinism: same inputs should give same output
+        output2 = activate!(net, inputs)
+        @test output[1] == output2[1]
+
+        # Test different inputs give different outputs (probabilistically)
+        output3 = activate!(net, [1.0, 1.0])
+        @test output[1] != output3[1]  # Should be different with different inputs
+    end
+
+    @testset "Network with Various Activation Functions" begin
+        config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
+        config = load_config(config_path)
+        rng = MersenneTwister(321)
+
+        # Test each available activation function
+        activations = [:sigmoid, :tanh, :relu, :sin, :gauss, :softplus,
+                       :identity, :clamped, :abs, :square, :cube]
+
+        for activation in activations
+            genome = Genome(1)
+
+            # Output node with specific activation
+            output = NodeGene(0)
+            NEAT.init_attributes!(output, config.genome_config, rng)
+            output.activation = activation
+            genome.nodes[0] = output
+
+            # Direct connection from input to output
+            conn = ConnectionGene((-1, 0), 1)
+            NEAT.init_attributes!(conn, config.genome_config, rng)
+            conn.weight = 1.0
+            genome.connections[(-1, 0)] = conn
+
+            # Build network
+            net = FeedForwardNetwork(genome, config.genome_config)
+
+            # Test with various inputs
+            # Config expects 2 inputs, so provide 2 (only first one is used due to our connection)
+            for test_input in [-2.0, -1.0, 0.0, 1.0, 2.0]
+                inputs = [test_input, 0.0]  # Second input is unused but required by config
+                output_val = activate!(net, inputs)
+
+                # Verify output is valid (not NaN or Inf)
+                @test !isnan(output_val[1])
+                @test !isinf(output_val[1])
+            end
+        end
+    end
+
     @testset "Genome Initialization" begin
         test_config_path = joinpath(@__DIR__, "test_config.toml")
         test_config = load_config(test_config_path)
