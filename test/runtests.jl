@@ -1082,6 +1082,115 @@ using Random
         end
     end
 
+    @testset "75% Disable Rule" begin
+        using NEAT: crossover
+
+        @testset "One Parent Disabled" begin
+            # Create two genes with same key, one disabled and one enabled
+            gene1 = ConnectionGene((0, 1), 1)
+            gene1.weight = 1.0
+            gene1.enabled = false  # Disabled
+
+            gene2 = ConnectionGene((0, 1), 1)
+            gene2.weight = 1.0
+            gene2.enabled = true   # Enabled
+
+            # Run many trials to get statistical validation
+            trials = 2000
+            rng = MersenneTwister(42)
+            disabled_count = 0
+            for _ in 1:trials
+                if !crossover(gene1, gene2, rng).enabled
+                    disabled_count += 1
+                end
+            end
+
+            disable_rate = disabled_count / trials
+
+            # When one parent disabled: 75% chance offspring disabled
+            # (rand() > 0.75 gives 25% chance enabled, 75% chance disabled)
+            @test 0.72 < disable_rate < 0.78
+            println("  One parent disabled: $(round(disable_rate * 100, digits=2))% disabled offspring (expected ~75%)")
+        end
+
+        @testset "Both Parents Disabled" begin
+            gene1 = ConnectionGene((0, 1), 1)
+            gene1.weight = 1.0
+            gene1.enabled = false
+
+            gene2 = ConnectionGene((0, 1), 1)
+            gene2.weight = 2.0
+            gene2.enabled = false
+
+            trials = 1000
+            rng = MersenneTwister(43)
+            disabled_count = 0
+            for _ in 1:trials
+                if !crossover(gene1, gene2, rng).enabled
+                    disabled_count += 1
+                end
+            end
+
+            disable_rate = disabled_count / trials
+
+            # Should be ~75% disabled (both parents disabled, then 75% rule applied)
+            @test disable_rate > 0.72 && disable_rate < 0.78
+            println("  Both parents disabled: $(round(disable_rate * 100, digits=2))% disabled offspring (expected ~75%)")
+        end
+
+        @testset "Both Parents Enabled" begin
+            gene1 = ConnectionGene((0, 1), 1)
+            gene1.weight = 1.0
+            gene1.enabled = true
+
+            gene2 = ConnectionGene((0, 1), 1)
+            gene2.weight = 2.0
+            gene2.enabled = true
+
+            trials = 1000
+            rng = MersenneTwister(44)
+            disabled_count = 0
+            for _ in 1:trials
+                if !crossover(gene1, gene2, rng).enabled
+                    disabled_count += 1
+                end
+            end
+
+            disable_rate = disabled_count / trials
+
+            # Should be 0% disabled (rule doesn't apply when both enabled)
+            @test disable_rate == 0.0
+            println("  Both parents enabled: $(round(disable_rate * 100, digits=2))% disabled offspring (expected 0%)")
+        end
+
+        @testset "Weight Inheritance Independence" begin
+            # Verify that the disable rule doesn't affect weight inheritance
+            gene1 = ConnectionGene((0, 1), 1)
+            gene1.weight = 1.0
+            gene1.enabled = false
+
+            gene2 = ConnectionGene((0, 1), 1)
+            gene2.weight = 2.0
+            gene2.enabled = true
+
+            trials = 1000
+            rng = MersenneTwister(45)
+            weight_1_count = 0
+            for _ in 1:trials
+                offspring = crossover(gene1, gene2, rng)
+                if offspring.weight == 1.0
+                    weight_1_count += 1
+                end
+            end
+
+            weight_ratio = weight_1_count / trials
+
+            # Weight should be inherited 50/50 from either parent
+            @test 0.45 < weight_ratio < 0.55
+            println("  Weight inheritance: $(round(weight_ratio * 100, digits=2))% from gene1 (expected ~50%)")
+        end
+    end
+
     @testset "XOR Evolution (short run)" begin
         config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
         config = load_config(config_path)
