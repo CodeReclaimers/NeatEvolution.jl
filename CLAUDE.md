@@ -134,6 +134,7 @@ Main evolution loop:
 - Handles extinction and reset
 - Checks termination criteria
 - Integrates with reporters for progress tracking
+- Supports initialization with imported genomes (auto-adjusts ID counters)
 
 #### 12. **feedforward.jl**
 Neural network evaluation:
@@ -242,6 +243,44 @@ function eval_genomes(genomes, config)
     end
 end
 ```
+
+### Importing and Seeding Populations
+Import evolved networks from JSON (neat-python or NEAT.jl format) and use them to seed new populations:
+
+```julia
+using NEAT
+
+config = load_config("config.toml")
+
+# Import genomes from JSON files
+imported_genomes = [
+    import_network_json("winner1.json", config.genome_config),
+    import_network_json("winner2.json", config.genome_config)
+]
+
+# Create population seeded with imported genomes
+# The constructor automatically adjusts genome IDs, node IDs, and innovation numbers
+# to prevent conflicts with newly created genomes
+pop = Population(config, imported_genomes)
+
+# The population now contains:
+# - All imported genomes (with their original IDs preserved)
+# - Newly created random genomes to fill remaining slots
+# - Properly adjusted counters ensuring no ID conflicts
+
+# Continue evolution
+winner = run!(pop, eval_genomes, n_generations)
+```
+
+Options:
+- `fill_remaining=true` (default): Fill population to configured size with random genomes
+- `fill_remaining=false`: Population contains only the imported genomes
+
+This is useful for:
+- **Transfer learning**: Start evolution with pre-trained networks from a related task
+- **Cross-library experiments**: Import neat-python networks and continue evolution in Julia
+- **Population seeding**: Bootstrap evolution with known good solutions
+- **Checkpoint/resume**: Save and restore evolution state across sessions
 
 ### Architecture Philosophy
 - Uses Julia structs instead of Python classes

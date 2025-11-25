@@ -312,6 +312,42 @@ add_activation_function!(:cubic, my_activation)
 # activation_options = ["sigmoid", "cubic"]
 ```
 
+### Population Seeding for Transfer Learning
+
+You can seed populations with pre-evolved networks imported from JSON files. This is useful for transfer learning, cross-library experiments, or checkpointing:
+
+```julia
+using NEAT
+
+config = load_config("config.toml")
+
+# Import genomes from JSON (neat-python or NEAT.jl format)
+imported_genomes = [
+    import_network_json("winner1.json", config.genome_config),
+    import_network_json("winner2.json", config.genome_config)
+]
+
+# Create population with imported genomes
+# The system automatically adjusts genome IDs, node IDs, and innovation numbers
+pop = Population(config, imported_genomes)
+
+# Continue evolution from these seeds
+add_reporter!(pop, StdOutReporter(true))
+winner = run!(pop, eval_genomes, 100)
+```
+
+**Parameters:**
+- `fill_remaining=true` (default): Fills to configured `pop_size` with random genomes
+- `fill_remaining=false`: Population contains only the imported genomes
+
+**Use cases:**
+- **Transfer learning**: Bootstrap with networks from a related problem
+- **Cross-library**: Import neat-python networks, continue in Julia
+- **Checkpointing**: Save/restore evolution state across sessions
+- **Ensemble seeding**: Start with multiple good solutions
+
+The imported genomes preserve their original IDs and all internal counters are automatically adjusted to ensure no conflicts with newly created genomes during evolution.
+
 ## Troubleshooting
 
 ### Evolution Stagnates

@@ -2,8 +2,9 @@ using Test
 using NEAT
 using Random
 
-# Include gene tests
+# Include test files
 include("test_genes.jl")
+include("test_population_seeding.jl")
 
 @testset "NEAT.jl" begin
     @testset "Config Loading" begin

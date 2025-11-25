@@ -117,13 +117,42 @@ Manages the evolutionary process.
 
 **Creation:**
 ```julia
+# Standard creation with random genomes
 pop = Population(config)
+
+# Create with imported genomes (for transfer learning)
+pop = Population(config, imported_genomes)
+pop = Population(config, imported_genomes, fill_remaining=false)
 ```
 
 **Running evolution:**
 ```julia
 winner = run!(pop, fitness_function, n_generations)
 ```
+
+**Population Seeding:**
+
+You can initialize a population with imported genomes from JSON files. The system automatically adjusts genome IDs, node IDs, and innovation numbers to prevent conflicts:
+
+```julia
+# Import genomes from JSON (neat-python or NEAT.jl format)
+imported = [
+    import_network_json("winner1.json", config.genome_config),
+    import_network_json("winner2.json", config.genome_config)
+]
+
+# Create population with these genomes
+pop = Population(config, imported)
+# Population now contains imported genomes + random genomes to fill pop_size
+
+# Or create population with only imported genomes
+pop = Population(config, imported, fill_remaining=false)
+```
+
+Use cases:
+- **Transfer learning**: Bootstrap evolution with networks from related tasks
+- **Cross-library experiments**: Import neat-python networks, continue evolution in Julia
+- **Checkpointing**: Save/restore evolution state across sessions
 
 ---
 

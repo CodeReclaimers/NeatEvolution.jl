@@ -270,15 +270,19 @@ function validate_genome_params(params::Dict)
     # Validate initial_connection
     if haskey(params, :initial_connection)
         ic = Symbol(lowercase(string(params[:initial_connection])))
-        valid_options = [:full, :full_direct, :full_nodirect, :partial, :unconnected]
+        valid_options = [:full, :full_direct, :full_nodirect, :partial, :partial_direct,
+                        :unconnected, :fs_neat, :fs_neat_nohidden, :fs_neat_hidden]
         if !(ic in valid_options)
             error("""Invalid initial_connection: '$(params[:initial_connection])'
                      Valid options: $(join(valid_options, ", "))
 
                      Recommended:
-                     - 'full_direct' (default): Direct input→output connections
-                     - 'full_nodirect': Complete connectivity, no direct connections
-                     - 'partial': Random connections
+                     - 'full' or 'full_nodirect': Fully connected (no direct input→output if hidden nodes exist)
+                     - 'full_direct': Fully connected including direct input→output connections
+                     - 'partial': Randomly connected based on connection_fraction
+                     - 'partial_direct': Partial with direct input→output allowed
+                     - 'fs_neat' or 'fs_neat_nohidden': FS-NEAT style (inputs directly to outputs)
+                     - 'fs_neat_hidden': FS-NEAT through hidden layer (inputs→hidden→outputs)
                      - 'unconnected': Start with no connections""")
         end
     end

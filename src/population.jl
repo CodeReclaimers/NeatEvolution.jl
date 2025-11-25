@@ -39,6 +39,125 @@ function Population(config::Config, rng::AbstractRNG=Random.GLOBAL_RNG)
     Population(config, reproduction, species_set, population, 0, nothing, Reporter[])
 end
 
+"""
+    Population(config::Config, initial_genomes::Vector{Genome};
+               fill_remaining::Bool=true, rng::AbstractRNG=Random.GLOBAL_RNG)
+
+Create a population initialized with a set of existing genomes (e.g., imported from JSON).
+
+This constructor automatically adjusts internal counters (genome IDs, node IDs, and innovation
+numbers) to ensure that newly created genomes and structural mutations do not conflict with
+the imported genomes.
+
+# Arguments
+- `config::Config`: NEAT configuration
+- `initial_genomes::Vector{Genome}`: Existing genomes to seed the population with
+- `fill_remaining::Bool=true`: If true, fill remaining population slots with random genomes
+- `rng::AbstractRNG`: Random number generator
+
+# Examples
+```julia
+# Import genomes from JSON files
+config = load_config("config.toml")
+imported = [
+    import_network_json("winner1.json", config.genome_config),
+    import_network_json("winner2.json", config.genome_config)
+]
+
+# Create population seeded with imported genomes
+pop = Population(config, imported)
+
+# The population now contains the imported genomes plus randomly generated ones
+# All genome IDs, node IDs, and innovation numbers are automatically managed
+```
+"""
+function Population(config::Config, initial_genomes::Vector{Genome};
+                   fill_remaining::Bool=true, rng::AbstractRNG=Random.GLOBAL_RNG)
+    if isempty(initial_genomes)
+        # No initial genomes, use standard constructor
+        return Population(config, rng)
+    end
+
+    # Create stagnation tracker
+    stagnation = Stagnation(config.stagnation_config)
+
+    # Create reproduction system
+    reproduction = Reproduction(config.reproduction_config, stagnation)
+
+    # Create species set
+    species_set = SpeciesSet(config.species_config)
+
+    # Adjust counters based on initial genomes
+    adjust_counters!(reproduction, config.genome_config, initial_genomes)
+
+    # Build initial population from provided genomes
+    population = Dict{Int, Genome}()
+    for genome in initial_genomes
+        population[genome.key] = genome
+        # Register in ancestors tracker
+        reproduction.ancestors[genome.key] = ()
+    end
+
+    # Fill remaining slots with random genomes if requested
+    if fill_remaining && length(population) < config.pop_size
+        remaining = config.pop_size - length(population)
+        new_genomes = create_new(reproduction, config.genome_config, remaining, rng)
+        merge!(population, new_genomes)
+    end
+
+    # Warn if we exceed population size
+    if length(population) > config.pop_size
+        @warn "Initial genomes ($(length(initial_genomes))) exceed configured population size ($(config.pop_size))"
+    end
+
+    # Initial speciation
+    speciate!(species_set, config, population, 0)
+
+    Population(config, reproduction, species_set, population, 0, nothing, Reporter[])
+end
+
+"""
+    adjust_counters!(reproduction::Reproduction, genome_config::GenomeConfig,
+                    genomes::Vector{Genome})
+
+Adjust genome ID, node ID, and innovation number counters to avoid conflicts with existing genomes.
+
+This function scans the provided genomes and updates the internal counters to start from values
+that will not conflict with any IDs or innovation numbers present in the existing genomes.
+"""
+function adjust_counters!(reproduction::Reproduction, genome_config::GenomeConfig,
+                         genomes::Vector{Genome})
+    # Find maximum genome ID
+    max_genome_id = 0
+    max_node_id = maximum(genome_config.output_keys)  # Start with output node IDs
+    max_innovation = -1
+
+    for genome in genomes
+        # Track max genome ID
+        max_genome_id = max(max_genome_id, genome.key)
+
+        # Track max node ID
+        for node_id in keys(genome.nodes)
+            max_node_id = max(max_node_id, node_id)
+        end
+
+        # Track max innovation number
+        for conn in values(genome.connections)
+            max_innovation = max(max_innovation, conn.innovation)
+        end
+    end
+
+    # Set counters to one past the maximum values found
+    reproduction.genome_indexer[] = max_genome_id + 1
+    genome_config.node_indexer[] = max_node_id + 1
+    genome_config.innovation_indexer[] = max_innovation + 1
+
+    println("Adjusted counters for $(length(genomes)) initial genomes:")
+    println("  - Next genome ID: $(reproduction.genome_indexer[])")
+    println("  - Next node ID: $(genome_config.node_indexer[])")
+    println("  - Next innovation number: $(genome_config.innovation_indexer[])")
+end
+
 """Add a reporter for tracking progress."""
 function add_reporter!(pop::Population, reporter::Reporter)
     push!(pop.reporters, reporter)

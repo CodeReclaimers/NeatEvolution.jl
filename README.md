@@ -32,7 +32,8 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - 7 aggregation functions
 - Multiple initial connection strategies
 - Comprehensive mutation operators
-- JSON export/import for model sharing
+- JSON export/import for model sharing (neat-python compatible)
+- Population seeding with imported genomes for transfer learning
 
 ✅ **Visualization** (Optional)
 - Fitness evolution plots
@@ -86,6 +87,32 @@ output = activate!(net, [1.0, 0.0])
 ```
 
 See [examples/xor/](examples/xor/) for a complete working example.
+
+### Advanced: Population Seeding for Transfer Learning
+
+You can seed populations with pre-trained networks from JSON (from neat-python or NEAT.jl):
+
+```julia
+using NEAT
+
+config = load_config("config.toml")
+
+# Import evolved networks
+imported_genomes = [
+    import_network_json("winner1.json", config.genome_config),
+    import_network_json("winner2.json", config.genome_config)
+]
+
+# Create population seeded with imported genomes
+# Counters are automatically adjusted to prevent ID conflicts
+pop = Population(config, imported_genomes)
+winner = run!(pop, eval_genomes, 100)
+```
+
+This is useful for:
+- **Transfer learning** - Start with networks from a related task
+- **Cross-library experiments** - Import neat-python networks, continue in Julia
+- **Checkpointing** - Save and restore evolution state
 
 ## Documentation
 
