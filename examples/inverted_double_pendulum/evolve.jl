@@ -1,36 +1,36 @@
 """
-Inverted Pendulum (CartPole) Example for NEAT.
+Inverted Double Pendulum Example for NEAT.
 
-This example evolves a neural network to solve the CartPole-v1 environment
-from Gymnasium (OpenAI Gym). The goal is to balance a pole on a cart by
-moving the cart left or right.
+This example evolves a neural network to solve the InvertedDoublePendulum-v5
+environment from Gymnasium. The goal is to balance two poles connected in series
+on a cart by applying continuous forces to the cart.
 
 Requirements:
 - PyCall.jl
-- Python with gymnasium installed
+- Python with gymnasium and mujoco installed
 
 Setup:
 ```bash
 # Install PyCall
 julia -e 'using Pkg; Pkg.add("PyCall")'
 
-# Install gymnasium in Python
-pip install gymnasium
+# Install gymnasium and mujoco in Python
+pip install gymnasium mujoco
 ```
 
 Environment Details:
-- Observation space: 4 continuous values
-  - Cart Position: -4.8 to 4.8
-  - Cart Velocity: -Inf to Inf
-  - Pole Angle: -0.418 to 0.418 radians (~24 degrees)
-  - Pole Angular Velocity: -Inf to Inf
-- Action space: 2 discrete actions (0: push left, 1: push right)
+- Observation space: 9 continuous values
+  - Cart Position: 1 value
+  - Pole Angles (sine): 2 values
+  - Pole Angles (cosine): 2 values
+  - Velocities (cart and poles): 3 values
+  - Constraint force: 1 value
+- Action space: 1 continuous action in range [-1.0, 1.0] (force on cart)
 - Episode termination:
-  - Pole angle > 12 degrees
-  - Cart position > 2.4 units from center
-  - Episode length > 500 steps
-- Reward: +1 for each timestep the pole remains upright
-- Solved: Average reward of 475+ over 100 consecutive episodes
+  - Second pole tip y-coordinate ≤ 1
+  - Episode length > 1000 steps
+- Reward: alive_bonus (10/step) - distance_penalty - velocity_penalty
+- Success: Maintain balance for as long as possible (maximize cumulative reward)
 """
 
 using NeatEvolution
@@ -44,7 +44,7 @@ function __init__()
 end
 
 """
-Evaluate a single genome in the CartPole environment.
+Evaluate a single genome in the InvertedDoublePendulum environment.
 Returns the total reward (fitness) achieved.
 """
 function eval_genome(net::FeedForwardNetwork, episodes::Int=1, render::Bool=false)
@@ -53,9 +53,9 @@ function eval_genome(net::FeedForwardNetwork, episodes::Int=1, render::Bool=fals
     for episode in 1:episodes
         # Create environment
         if render && episode == episodes  # Only render last episode
-            env = gym.make("CartPole-v1", render_mode="human")
+            env = gym.make("InvertedDoublePendulum-v5", render_mode="human")
         else
-            env = gym.make("CartPole-v1")
+            env = gym.make("InvertedDoublePendulum-v5")
         end
 
         # Reset environment
@@ -72,12 +72,12 @@ function eval_genome(net::FeedForwardNetwork, episodes::Int=1, render::Bool=fals
             # Get network output
             output = activate!(net, obs)
 
-            # Choose action based on output
-            # output[1] > 0.5 -> push right (1), else push left (0)
-            action = output[1] > 0.0 ? 1 : 0
+            # Action is continuous in range [-1, 1]
+            # Clamp output to valid action range
+            action = clamp(output[1], -1.0, 1.0)
 
-            # Take action in environment
-            observation, reward, done, truncated, info = env.step(action)
+            # Take action in environment (must be passed as array)
+            observation, reward, done, truncated, info = env.step([action])
             episode_reward += reward
         end
 
@@ -89,15 +89,18 @@ function eval_genome(net::FeedForwardNetwork, episodes::Int=1, render::Bool=fals
 end
 
 """
-Fitness function for CartPole problem.
+Fitness function for InvertedDoublePendulum problem.
 Evaluates each genome by running it in the environment.
 """
 function eval_genomes(genomes, config)
-    for (genome_id, genome) in genomes
+    # Parallel evaluation using multi-threading
+    # Run with: julia -t auto --project examples/inverted_double_pendulum/evolve.jl
+    Threads.@threads for (genome_id, genome) in genomes
         net = FeedForwardNetwork(genome, config.genome_config)
 
         # Evaluate over multiple episodes to get more stable fitness
-        genome.fitness = eval_genome(net, 3, false)
+        # Using 5 episodes reduces noise and helps identify truly better solutions
+        genome.fitness = eval_genome(net, 5, false)
     end
 end
 
@@ -131,10 +134,10 @@ function main()
     __init__()
 
     println("="^70)
-    println("NEAT CartPole Evolution")
+    println("NEAT Inverted Double Pendulum Evolution")
     println("="^70)
-    println("Goal: Evolve a neural network to balance a pole on a cart")
-    println("Success criteria: Average reward of 475+ over 100 episodes")
+    println("Goal: Evolve a neural network to balance two poles on a cart")
+    println("Challenge: Control a complex system with cascading dynamics")
     println("="^70)
 
     # Load configuration
@@ -149,7 +152,7 @@ function main()
 
     # Run evolution
     println("\nStarting evolution...")
-    winner = run!(pop, eval_genomes, 100)  # Max 100 generations
+    winner = run!(pop, eval_genomes, 500)  # Max 500 generations
 
     # Display winning genome
     println("\n" * "="^70)
@@ -167,16 +170,21 @@ function main()
     test_fitness = eval_genome(winner_net, 100, false)
     println("  Average reward over 100 episodes: $test_fitness")
 
-    if test_fitness >= 475.0
-        println("\n🎉 Problem solved! (average reward >= 475)")
-    elseif test_fitness >= 195.0
-        println("\n✓ Good solution found! (average reward >= 195)")
+    # Interpret results
+    # Default episode length is 1000 steps
+    # Reward is ~10 per step when balanced, so max theoretical is ~10,000
+    if test_fitness >= 8000.0
+        println("\n🎉 Excellent solution! (average reward >= 8000)")
+    elseif test_fitness >= 5000.0
+        println("\n✓ Good solution! (average reward >= 5000)")
+    elseif test_fitness >= 2000.0
+        println("\n+ Decent solution (average reward >= 2000)")
     else
-        println("\n  Solution needs improvement (target: 475+)")
+        println("\n  Solution needs improvement (target: 5000+)")
     end
 
     # Ask user if they want to visualize
-    println("\nVisualize the winner? (requires display) [y/N]: ")
+    println("\nVisualize the winner? (requires display and mujoco) [y/N]: ")
     response = lowercase(strip(readline()))
 
     if response == "y" || response == "yes"
@@ -184,7 +192,10 @@ function main()
             visualize_genome(winner, config, 5)
         catch e
             println("Visualization failed: $e")
-            println("Make sure you have a display available and pygame installed.")
+            println("Make sure you have:")
+            println("  - A display available")
+            println("  - MuJoCo installed: pip install mujoco")
+            println("  - Rendering dependencies: pip install gymnasium[mujoco]")
         end
     end
 

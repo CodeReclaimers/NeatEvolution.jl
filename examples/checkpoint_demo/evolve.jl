@@ -11,7 +11,7 @@ Usage:
     julia --project examples/checkpoint_demo/evolve.jl
 """
 
-using NEAT
+using NeatEvolution
 
 const XOR_INPUTS = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]]
 const XOR_OUTPUTS = [[0.0], [1.0], [1.0], [0.0]]

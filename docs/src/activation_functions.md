@@ -2,11 +2,11 @@
 
 ## Overview
 
-Activation functions determine the output of a node given its aggregated input. NEAT.jl provides 18 built-in activation functions optimized for evolutionary computation.
+Activation functions determine the output of a node given its aggregated input. NeatEvolution.jl provides 18 built-in activation functions optimized for evolutionary computation.
 
 ## Design Philosophy
 
-Many activation functions in NEAT.jl are scaled to place more of their "interesting" behavior in the region [-1, 1] × [-1, 1]. This helps with:
+Many activation functions in NeatEvolution.jl are scaled to place more of their "interesting" behavior in the region [-1, 1] × [-1, 1]. This helps with:
 - Faster convergence
 - Better gradient properties for mutation
 - Numeric stability
@@ -456,7 +456,7 @@ activation_options = ["sigmoid", "tanh", "relu", "sin"]
 You can add your own activation functions:
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # Define custom activation
 function my_custom_activation(z::Float64)

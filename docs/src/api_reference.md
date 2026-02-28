@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for NEAT.jl public API.
+Complete reference for NeatEvolution.jl public API.
 
 ## Core Types
 
@@ -142,7 +142,7 @@ winner = run!(pop, fitness_function, n_generations)
 You can initialize a population with imported genomes from JSON files. The system automatically adjusts genome IDs, node IDs, and innovation numbers to prevent conflicts:
 
 ```julia
-# Import genomes from JSON (neat-python or NEAT.jl format)
+# Import genomes from JSON (neat-python or NeatEvolution.jl format)
 imported = [
     import_network_json("winner1.json", config.genome_config),
     import_network_json("winner2.json", config.genome_config)
@@ -901,7 +901,7 @@ end
 ## Complete Example
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # 1. Load configuration
 config = load_config("config.toml")

@@ -31,7 +31,7 @@ examples/xor/
 ### Step 1: Define Test Cases
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # XOR inputs and expected outputs
 const XOR_INPUTS = [

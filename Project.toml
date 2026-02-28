@@ -1,4 +1,4 @@
-name = "NEAT"
+name = "NeatEvolution"
 uuid = "fcc92617-70eb-4c43-847c-323c44b5224c"
 authors = ["CodeReclaimers <CodeReclaimers@users.noreply.github.com>"]
 version = "0.1.0"
@@ -19,8 +19,8 @@ Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [extensions]
-NEATGraphMakieExt = ["GLMakie", "GraphMakie", "Graphs"]
-NEATVisualizationExt = "Plots"
+NeatEvolutionGraphMakieExt = ["GLMakie", "GraphMakie", "Graphs"]
+NeatEvolutionVisualizationExt = "Plots"
 
 [compat]
 FunctionWrappers = "1"

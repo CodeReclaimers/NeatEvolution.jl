@@ -1,6 +1,6 @@
 # Frequently Asked Questions (FAQ)
 
-This document answers common questions about using NEAT.jl for neuroevolution.
+This document answers common questions about using NeatEvolution.jl for neuroevolution.
 
 ## Table of Contents
 
@@ -27,9 +27,9 @@ This document answers common questions about using NEAT.jl for neuroevolution.
 
 **Original paper**: Stanley, K. O., & Miikkulainen, R. (2002). "Evolving Neural Networks through Augmenting Topologies"
 
-### Is NEAT.jl ready for production use?
+### Is NeatEvolution.jl ready for production use?
 
-**Yes**, NEAT.jl v0.1.0 is a complete, tested implementation suitable for:
+**Yes**, NeatEvolution.jl v0.1.0 is a complete, tested implementation suitable for:
 
 - ✅ Research and experimentation
 - ✅ Game AI and control tasks
@@ -44,7 +44,7 @@ This document answers common questions about using NEAT.jl for neuroevolution.
 
 ### What are the main differences from neat-python?
 
-NEAT.jl is a faithful Julia port of neat-python with these key differences:
+NeatEvolution.jl is a faithful Julia port of neat-python with these key differences:
 
 **Similarities**:
 - Same NEAT algorithm implementation
@@ -59,7 +59,7 @@ NEAT.jl is a faithful Julia port of neat-python with these key differences:
 - **Extensions**: Uses Julia's package extension system for optional dependencies
 - **Network types**: Supports feed-forward, recurrent (`RecurrentNetwork`), continuous-time recurrent (`CTRNNNetwork`), and Izhikevich spiking (`IZNNNetwork`) networks
 
-### How do I cite NEAT.jl in academic work?
+### How do I cite NeatEvolution.jl in academic work?
 
 Cite both the original NEAT paper and this implementation:
 
@@ -76,7 +76,7 @@ Cite both the original NEAT paper and this implementation:
 }
 
 @software{neat_jl,
-  title={NEAT.jl: NeuroEvolution of Augmenting Topologies in Julia},
+  title={NeatEvolution.jl: NeuroEvolution of Augmenting Topologies in Julia},
   author={CodeReclaimers},
   year={2025},
   url={https://github.com/CodeReclaimers/NEAT}
@@ -626,7 +626,7 @@ plot_fitness(stats, filename="fitness_trend.png")
 
 ### Can I parallelize fitness evaluation?
 
-**Yes!** NEAT fitness evaluation is embarrassingly parallel:
+**Yes!** NeatEvolution.jl fitness evaluation is embarrassingly parallel:
 
 ```julia
 using Distributed
@@ -634,7 +634,7 @@ using Distributed
 # Add worker processes
 addprocs(4)
 
-@everywhere using NEAT
+@everywhere using NeatEvolution
 @everywhere include("my_fitness.jl")
 
 function eval_genomes_parallel(genomes, config)
@@ -664,10 +664,10 @@ winner = run!(pop, eval_genomes_parallel, 100)
 
 ### How do I export trained networks?
 
-NEAT.jl provides JSON export for framework-agnostic model sharing:
+NeatEvolution.jl provides JSON export for framework-agnostic model sharing:
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # After training
 winner = run!(pop, eval_genomes, 100)
@@ -690,12 +690,12 @@ net = FeedForwardNetwork(imported, config.genome_config)
 - JavaScript (for web deployment)
 - Any language with JSON support
 
-### Can I integrate NEAT with OpenAI Gym?
+### Can I integrate NeatEvolution.jl with OpenAI Gym?
 
 **Yes!** See `examples/gym_integration.jl` for a complete example:
 
 ```julia
-using NEAT
+using NeatEvolution
 using PythonCall
 
 gym = pyimport("gym")
@@ -731,9 +731,9 @@ end
 
 Two options:
 
-**Option 1: Use NEAT.jl directly**
+**Option 1: Use NeatEvolution.jl directly**
 ```julia
-using NEAT
+using NeatEvolution
 
 # Load saved network
 config = load_config("config.toml")

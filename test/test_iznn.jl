@@ -7,8 +7,8 @@ spike timing.
 """
 
 using Test
-using NEAT
-using NEAT: NodeGene, ConnectionGene, Genome, GenomeConfig,
+using NeatEvolution
+using NeatEvolution: NodeGene, ConnectionGene, Genome, GenomeConfig,
             IZNNNetwork, IZNeuron, advance!, reset!, set_inputs!,
             IZ_REGULAR_SPIKING, IZ_FAST_SPIKING
 

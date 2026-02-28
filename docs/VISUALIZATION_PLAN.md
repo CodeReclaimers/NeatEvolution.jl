@@ -1,7 +1,7 @@
-# NEAT.jl Visualization Plan
+# NeatEvolution.jl Visualization Plan
 
 ## Overview
-This document outlines a plan to port visualization capabilities from neat-python to NEAT.jl, enabling users to visualize evolution progress, network topologies, and species dynamics.
+This document outlines a plan to port visualization capabilities from neat-python to NeatEvolution.jl, enabling users to visualize evolution progress, network topologies, and species dynamics.
 
 ## Current neat-python Visualization Features
 
@@ -134,7 +134,7 @@ end
 **Implementation Details:**
 - Created `src/statistics.jl` with StatisticsReporter type
 - All methods implemented and tested
-- Added to `ext/NEATVisualizationExt.jl` as package extension
+- Added to `ext/NeatEvolutionVisualizationExt.jl` as package extension
 - `plot_fitness()` shows best, average, and ±1σ bands
 - `plot_species()` creates stacked area chart
 - `plot_fitness_comparison()` compares multiple runs
@@ -147,7 +147,7 @@ end
 **Status: Implemented and tested (commit e8b4460)**
 
 **Implementation Details:**
-- Implemented `draw_net()` function in `ext/NEATVisualizationExt.jl`
+- Implemented `draw_net()` function in `ext/NeatEvolutionVisualizationExt.jl`
 - Uses Plots.jl instead of Graphviz for simpler dependency management
 - Layer-based automatic layout using `feed_forward_layers()`
 - Color-coded nodes: input (green), output (blue), hidden (white)
@@ -174,7 +174,7 @@ end
 ```
 
 **Implementation Details:**
-- Implemented as `animate_evolution()` in ext/NEATVisualizationExt.jl:560-600
+- Implemented as `animate_evolution()` in ext/NeatEvolutionVisualizationExt.jl:560-600
 - Creates GIF showing network topology changes over generations
 - Samples up to 50 frames to keep file size manageable
 - Shows fitness progression in title
@@ -200,7 +200,7 @@ end
 ```
 
 **Implementation Details:**
-- Implemented in ext/NEATVisualizationExt.jl:427-545
+- Implemented in ext/NeatEvolutionVisualizationExt.jl:427-545
 - `plot_activation_heatmap()` shows network output across 2D input space
 - Perfect for visualizing XOR and other 2D problems
 - `plot_activation_comparison()` for side-by-side genome comparisons
@@ -219,7 +219,7 @@ end
 ```
 
 **Implementation Details:**
-- Implemented in ext/NEATGraphMakieExt.jl
+- Implemented in ext/NeatEvolutionGraphMakieExt.jl
 - `draw_network_interactive()` creates fully interactive 3D visualization
 - `draw_network_comparison_interactive()` for side-by-side comparisons
 - Supports 5 layout algorithms: :spring, :stress, :shell, :spectral, :circular
@@ -232,12 +232,12 @@ end
 
 ### Package Structure (Actual Implementation)
 ```
-NEAT.jl/
+NeatEvolution.jl/
 ├── src/
-│   ├── NEAT.jl                # Main module with function stubs
+│   ├── NeatEvolution.jl        # Main module with function stubs
 │   └── statistics.jl          # ✅ Statistics collection
 ├── ext/
-│   └── NEATVisualizationExt.jl  # ✅ Package extension with all viz
+│   └── NeatEvolutionVisualizationExt.jl  # ✅ Package extension with all viz
 ├── examples/
 │   └── xor/
 │       ├── evolve.jl
@@ -258,7 +258,7 @@ NEAT.jl/
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [extensions]
-NEATVisualizationExt = "Plots"
+NeatEvolutionVisualizationExt = "Plots"
 
 [compat]
 Plots = "1.38"
@@ -273,7 +273,7 @@ test = ["Test", "Plots"]
 
 **Benefits of this approach:**
 - Plots.jl is only loaded when user explicitly does `using Plots`
-- Core NEAT.jl has no visualization dependencies
+- Core NeatEvolution.jl has no visualization dependencies
 - Single extension handles all visualization (fitness, species, networks)
 - Tests include Plots to verify visualization works
 
@@ -305,7 +305,7 @@ end
 
 ### Basic Workflow
 ```julia
-using NEAT
+using NeatEvolution
 
 # Setup
 config = load_config("config.toml")
@@ -319,7 +319,7 @@ add_reporter!(pop, stats)
 winner = run!(pop, eval_genomes, 100)
 
 # Visualize results
-using NEAT.Visualization
+using NeatEvolution.Visualization
 
 plot_fitness(stats, filename="fitness.png")
 plot_species(stats, filename="species.png")
@@ -357,9 +357,9 @@ display(fig)
 
 For users familiar with neat-python:
 
-| neat-python | NEAT.jl (Implemented) |
+| neat-python | NeatEvolution.jl (Implemented) |
 |-------------|---------|
-| `neat.StatisticsReporter()` | `NEAT.StatisticsReporter()` ✅ |
+| `neat.StatisticsReporter()` | `NeatEvolution.StatisticsReporter()` ✅ |
 | `p.add_reporter(stats)` | `add_reporter!(pop, stats)` ✅ |
 | `visualize.plot_stats(stats)` | `plot_fitness(stats)` ✅ |
 | `visualize.plot_species(stats)` | `plot_species(stats)` ✅ |
@@ -386,19 +386,19 @@ For users familiar with neat-python:
    - CSV export functionality
    - 15 comprehensive tests
 
-2. **Fitness & Species Visualization** (ext/NEATVisualizationExt.jl:18-185)
+2. **Fitness & Species Visualization** (ext/NeatEvolutionVisualizationExt.jl:18-185)
    - plot_fitness() with best, average, ±1σ bands
    - plot_species() with stacked area charts
    - plot_fitness_comparison() for multi-run analysis
    - 7 tests covering all plot types
 
-3. **Network Structure Visualization** (ext/NEATVisualizationExt.jl:187-408)
+3. **Network Structure Visualization** (ext/NeatEvolutionVisualizationExt.jl:187-408)
    - draw_net() with layer-based layout
    - Color-coded nodes and weight-based connections
    - draw_net_comparison() for genome comparisons
    - 10 tests covering all network features
 
-4. **Advanced Visualizations - Phase 3** (ext/NEATVisualizationExt.jl:410-600)
+4. **Advanced Visualizations - Phase 3** (ext/NeatEvolutionVisualizationExt.jl:410-600)
    - plot_activation_heatmap() showing 2D input space behavior
    - plot_activation_comparison() for side-by-side comparisons
    - animate_evolution() creating GIF of network evolution
@@ -431,7 +431,7 @@ For users familiar with neat-python:
 
 ## Implementation Decisions ✅
 
-1. **Should visualization be in core package or separate `NEATViz.jl` package?**
+1. **Should visualization be in core package or separate `NeatEvolutionViz.jl` package?**
    - ✅ **Decision**: Core package with weak dependencies and package extensions
    - **Result**: Clean integration, no hard dependencies, users opt-in with `using Plots`
 

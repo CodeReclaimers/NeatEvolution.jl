@@ -1,4 +1,4 @@
-# NEAT.jl
+# NeatEvolution.jl
 
 A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), the evolutionary algorithm that creates artificial neural networks.
 
@@ -34,7 +34,7 @@ Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
 ```
 
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 pop = Population(config)

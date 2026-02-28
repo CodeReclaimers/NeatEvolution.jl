@@ -13,7 +13,7 @@ Usage:
     julia --project examples/ctrnn_oscillator/evolve.jl
 """
 
-using NEAT
+using NeatEvolution
 
 const SIM_TIME = 2.0      # total simulation time (seconds)
 const TIME_STEP = 0.01     # integration step (seconds)

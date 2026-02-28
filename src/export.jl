@@ -1,5 +1,5 @@
 """
-Model export and import functionality for NEAT.jl
+Model export and import functionality for NeatEvolution.jl
 
 Supports exporting evolved networks to JSON format compatible with neat-python v1.0:
 - Framework-agnostic model sharing
@@ -28,7 +28,7 @@ const BUILTIN_AGGREGATIONS = Set([
 """
     is_builtin_activation(name::Symbol) -> Bool
 
-Check if an activation function is built-in to NEAT.jl.
+Check if an activation function is built-in to NeatEvolution.jl.
 """
 function is_builtin_activation(name::Symbol)
     return name in BUILTIN_ACTIVATIONS
@@ -37,7 +37,7 @@ end
 """
     is_builtin_aggregation(name::Symbol) -> Bool
 
-Check if an aggregation function is built-in to NEAT.jl.
+Check if an aggregation function is built-in to NeatEvolution.jl.
 """
 function is_builtin_aggregation(name::Symbol)
     return name in BUILTIN_AGGREGATIONS
@@ -82,7 +82,7 @@ The JSON format follows the neat-python specification and includes:
 
 # Example
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 # ... run evolution ...
@@ -217,7 +217,7 @@ end
 """
     import_network_json(filename::String, config::GenomeConfig) -> Genome
 
-Import a genome from JSON format (supports both neat-python v1.0 and legacy NEAT.jl formats).
+Import a genome from JSON format (supports both neat-python v1.0 and legacy NeatEvolution.jl formats).
 
 Loads a network previously exported with `export_network_json` and reconstructs
 the Genome object with all nodes and connections.
@@ -231,7 +231,7 @@ the Genome object with all nodes and connections.
 
 # Example
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 
@@ -252,7 +252,7 @@ function import_network_json(filename::String, config::GenomeConfig)
         # New format (neat-python v1.0 compatible)
         return import_network_json_v1(network_data, config)
     else
-        # Legacy NEAT.jl format
+        # Legacy NeatEvolution.jl format
         return import_network_json_legacy(network_data, config)
     end
 end
@@ -278,7 +278,7 @@ function import_network_json_v1(network_data::Dict, config::GenomeConfig)
         node_id = node_data["id"]
         node_type = node_data["type"]
 
-        # Skip input nodes (they are not stored in genome.nodes in NEAT.jl)
+        # Skip input nodes (they are not stored in genome.nodes in NeatEvolution.jl)
         if node_type == "input"
             continue
         end
@@ -342,7 +342,7 @@ end
 """
     import_network_json_legacy(network_data::Dict, config::GenomeConfig) -> Genome
 
-Import a genome from legacy NEAT.jl format (pre-v1.0).
+Import a genome from legacy NeatEvolution.jl format (pre-v1.0).
 """
 function import_network_json_legacy(network_data::Dict, config::GenomeConfig)
     # Extract metadata
@@ -381,7 +381,7 @@ function import_network_json_legacy(network_data::Dict, config::GenomeConfig)
         genome.connections[conn_key] = conn
     end
 
-    @info "Network imported from legacy NEAT.jl format"
+    @info "Network imported from legacy NeatEvolution.jl format"
     return genome
 end
 

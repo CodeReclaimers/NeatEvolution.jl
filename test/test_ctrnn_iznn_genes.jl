@@ -6,7 +6,7 @@ correctly through init, mutate, crossover, distance, and copy operations.
 """
 
 using Test
-using NEAT
+using NeatEvolution
 using Random
 
 """
@@ -83,7 +83,7 @@ end
 
         # Nodes created with standard config should have NaN for new fields
         node = NodeGene(1)
-        NEAT.init_attributes!(node, config.genome_config, MersenneTwister(42))
+        NeatEvolution.init_attributes!(node, config.genome_config, MersenneTwister(42))
         @test isnan(node.time_constant)
         @test isnan(node.iz_a)
         @test isnan(node.iz_b)
@@ -99,7 +99,7 @@ end
 
         rng = MersenneTwister(42)
         node = NodeGene(1)
-        NEAT.init_attributes!(node, config, rng)
+        NeatEvolution.init_attributes!(node, config, rng)
 
         @test !isnan(node.time_constant)
         @test node.time_constant >= 0.001  # min_value
@@ -110,7 +110,7 @@ end
         # Determinism
         rng2 = MersenneTwister(42)
         node2 = NodeGene(1)
-        NEAT.init_attributes!(node2, config, rng2)
+        NeatEvolution.init_attributes!(node2, config, rng2)
         @test node2.time_constant == node.time_constant
 
         # Mutation should eventually change the value
@@ -138,7 +138,7 @@ end
 
         rng = MersenneTwister(42)
         node = NodeGene(1)
-        NEAT.init_attributes!(node, config, rng)
+        NeatEvolution.init_attributes!(node, config, rng)
 
         @test !isnan(node.iz_a)
         @test !isnan(node.iz_b)
@@ -204,7 +204,7 @@ end
         from_1 = 0
         trials = 1000
         for _ in 1:trials
-            child = NEAT.crossover(n1, n2, rng)
+            child = NeatEvolution.crossover(n1, n2, rng)
             @test child.time_constant == 0.01 || child.time_constant == 1.0
             from_1 += (child.time_constant == 0.01)
         end
@@ -224,7 +224,7 @@ end
         n2.bias = 2.0; n2.response = 2.0
         n2.activation = :identity; n2.aggregation = :sum
 
-        child = NEAT.crossover(n1, n2, rng)
+        child = NeatEvolution.crossover(n1, n2, rng)
         @test isnan(child.time_constant)
         @test isnan(child.iz_a)
         println("  Crossover NaN: NaN fields propagate correctly")
@@ -241,20 +241,20 @@ end
         n1.activation = :sigmoid; n1.aggregation = :sum
 
         n2 = copy(n1)
-        d_baseline = NEAT.distance(n1, n2, config.genome_config)
+        d_baseline = NeatEvolution.distance(n1, n2, config.genome_config)
         @test d_baseline == 0.0
 
         # Both have time_constant: contributes to distance
         n1.time_constant = 0.01
         n2.time_constant = 0.05
-        d_with_tc = NEAT.distance(n1, n2, config.genome_config)
+        d_with_tc = NeatEvolution.distance(n1, n2, config.genome_config)
         expected_extra = abs(0.01 - 0.05) * wc
         @test d_with_tc ≈ expected_extra atol=1e-10
         println("  Distance CTRNN: Δtc contribution = $(d_with_tc)")
 
         # One NaN, one not: no contribution (asymmetric)
         n2.time_constant = NaN
-        d_one_nan = NEAT.distance(n1, n2, config.genome_config)
+        d_one_nan = NeatEvolution.distance(n1, n2, config.genome_config)
         @test d_one_nan == 0.0  # time_constant doesn't contribute
         println("  Distance CTRNN: one NaN → no contribution")
     end
@@ -272,7 +272,7 @@ end
         n2 = copy(n1)
         n2.iz_a = 0.10; n2.iz_b = 0.25; n2.iz_c = -50.0; n2.iz_d = 2.0
 
-        d = NEAT.distance(n1, n2, config.genome_config)
+        d = NeatEvolution.distance(n1, n2, config.genome_config)
         expected = (abs(0.02 - 0.10) + abs(0.20 - 0.25) + abs(-65.0 - (-50.0)) + abs(8.0 - 2.0)) * wc
         @test d ≈ expected atol=1e-10
         println("  Distance IZNN: $(d) (expected $(expected))")

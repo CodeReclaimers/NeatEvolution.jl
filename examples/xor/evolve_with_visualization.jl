@@ -11,7 +11,7 @@ Requires Plots.jl to be installed:
     using Pkg; Pkg.add("Plots")
 """
 
-using NEAT
+using NeatEvolution
 
 # Load Plots for visualization
 using Plots

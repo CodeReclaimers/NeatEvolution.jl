@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NEAT is a Julia package implementing NeuroEvolution of Augmenting Topologies (NEAT). This library is designed as:
+NeatEvolution is a Julia package implementing NeuroEvolution of Augmenting Topologies (NEAT). This library is designed as:
 - A platform for running ad-hoc evolution experiments to determine feasibility
 - A starting point for building custom neuroevolution solutions
 
@@ -20,7 +20,7 @@ The package is based on the neat-python implementation and provides equivalent f
 julia --project -e 'using Pkg; Pkg.test()'
 
 # Run tests interactively (for development)
-julia --project -e 'using Pkg; Pkg.test("NEAT"; test_args=["--verbose"])'
+julia --project -e 'using Pkg; Pkg.test("NeatEvolution"; test_args=["--verbose"])'
 ```
 
 ### Running Examples
@@ -38,7 +38,7 @@ julia --project
 julia --project -e 'using Pkg; Pkg.instantiate()'
 
 # Load package in REPL for interactive development
-julia --project -e 'using NEAT'
+julia --project -e 'using NeatEvolution'
 ```
 
 ### Documentation
@@ -156,7 +156,7 @@ Utility functions:
 ### File Structure
 ```
 src/
-├── NEAT.jl              # Main module with exports
+├── NeatEvolution.jl     # Main module with exports
 ├── attributes.jl        # Attribute system
 ├── genes.jl            # Node and Connection genes
 ├── genome.jl           # Genome with mutation/crossover
@@ -221,14 +221,14 @@ Network structure and mutation parameters:
 
 ### Adding New Activation Functions
 ```julia
-using NEAT
-NEAT.add_activation_function!(:custom, x -> tanh(x^2))
+using NeatEvolution
+NeatEvolution.add_activation_function!(:custom, x -> tanh(x^2))
 ```
 
 ### Adding New Aggregation Functions
 ```julia
-using NEAT
-NEAT.add_aggregation_function!(:custom, xs -> sum(xs.^2))
+using NeatEvolution
+NeatEvolution.add_aggregation_function!(:custom, xs -> sum(xs.^2))
 ```
 
 ### Creating Custom Fitness Functions
@@ -245,10 +245,10 @@ end
 ```
 
 ### Importing and Seeding Populations
-Import evolved networks from JSON (neat-python or NEAT.jl format) and use them to seed new populations:
+Import evolved networks from JSON (neat-python or NeatEvolution.jl format) and use them to seed new populations:
 
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 

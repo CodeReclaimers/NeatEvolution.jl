@@ -1,5 +1,5 @@
 using Test
-using NEAT
+using NeatEvolution
 using Random
 
 @testset "Population Seeding with Imported Genomes" begin
@@ -20,12 +20,12 @@ using Random
         g2.connections[(0, 75)] = ConnectionGene((0, 75), 20)
 
         # Create reproduction and genome_config for testing
-        stagnation = NEAT.Stagnation(config.stagnation_config)
-        reproduction = NEAT.Reproduction(config.reproduction_config, stagnation)
+        stagnation = NeatEvolution.Stagnation(config.stagnation_config)
+        reproduction = NeatEvolution.Reproduction(config.reproduction_config, stagnation)
         genome_config = config.genome_config
 
         # Test counter adjustment
-        NEAT.adjust_counters!(reproduction, genome_config, [g1, g2])
+        NeatEvolution.adjust_counters!(reproduction, genome_config, [g1, g2])
 
         # Verify genome ID counter
         @test reproduction.genome_indexer[] == 201  # max(100, 200) + 1

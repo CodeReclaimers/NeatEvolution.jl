@@ -1,5 +1,5 @@
 using Test
-using NEAT
+using NeatEvolution
 using Random
 
 # Include test files
@@ -13,7 +13,7 @@ include("test_checkpointer.jl")
 include("test_stagnation.jl")
 include("test_speciation.jl")
 
-@testset "NEAT.jl" begin
+@testset "NeatEvolution.jl" begin
     @testset "Config Loading" begin
         # Test that we can load a config file
         config_path = joinpath(dirname(@__DIR__), "examples", "xor", "config.toml")
@@ -143,7 +143,7 @@ include("test_speciation.jl")
 
     @testset "Graph Algorithms" begin
         # Import graph functions
-        using NEAT: creates_cycle, required_for_output, feed_forward_layers
+        using NeatEvolution: creates_cycle, required_for_output, feed_forward_layers
 
         @testset "creates_cycle" begin
             # Self-connection creates cycle
@@ -348,13 +348,13 @@ include("test_speciation.jl")
     end
 
     @testset "Feed-Forward Network Evaluation" begin
-        using NEAT: sigmoid_activation
+        using NeatEvolution: sigmoid_activation
 
         @testset "Unconnected network" begin
             # Network with no inputs and one output neuron
             input_nodes = Int[]
             output_nodes = [0]
-            node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, Tuple{Int, Float64}[])]
+            node_evals = [(0, NeatEvolution.ActivationFn(sigmoid_activation), NeatEvolution.AggregationFn(sum_aggregation), 0.0, 1.0, Tuple{Int, Float64}[])]
             values = Dict{Int, Float64}(0 => 0.0)
 
             net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Float64[], Vector{Float64}(undef, 1))
@@ -374,7 +374,7 @@ include("test_speciation.jl")
             # Simple network with one connection of weight 1.0 to sigmoid output
             input_nodes = [-1]
             output_nodes = [0]
-            node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, [(-1, 1.0)])]
+            node_evals = [(0, NeatEvolution.ActivationFn(sigmoid_activation), NeatEvolution.AggregationFn(sum_aggregation), 0.0, 1.0, [(-1, 1.0)])]
             values = Dict{Int, Float64}(-1 => 0.0, 0 => 0.0)
 
             net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Vector{Float64}(undef, 1), Vector{Float64}(undef, 1))
@@ -505,33 +505,33 @@ include("test_speciation.jl")
 
         # Add output node (key 0)
         output_node = NodeGene(0)
-        NEAT.init_attributes!(output_node, config.genome_config, rng)
+        NeatEvolution.init_attributes!(output_node, config.genome_config, rng)
         genome.nodes[0] = output_node
 
         # Add reachable hidden node (key 1)
         hidden_reachable = NodeGene(1)
-        NEAT.init_attributes!(hidden_reachable, config.genome_config, rng)
+        NeatEvolution.init_attributes!(hidden_reachable, config.genome_config, rng)
         genome.nodes[1] = hidden_reachable
 
         # Add unreachable hidden node (key 2) - no path to output
         hidden_unreachable = NodeGene(2)
-        NEAT.init_attributes!(hidden_unreachable, config.genome_config, rng)
+        NeatEvolution.init_attributes!(hidden_unreachable, config.genome_config, rng)
         genome.nodes[2] = hidden_unreachable
 
         # Connect input -1 to reachable hidden node 1
         conn1 = ConnectionGene((-1, 1), 1)
-        NEAT.init_attributes!(conn1, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn1, config.genome_config, rng)
         genome.connections[(-1, 1)] = conn1
 
         # Connect reachable hidden node 1 to output 0
         conn2 = ConnectionGene((1, 0), 2)
-        NEAT.init_attributes!(conn2, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn2, config.genome_config, rng)
         genome.connections[(1, 0)] = conn2
 
         # Connect input -2 to unreachable hidden node 2
         # (but node 2 doesn't connect to output, so it should be pruned)
         conn3 = ConnectionGene((-2, 2), 3)
-        NEAT.init_attributes!(conn3, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn3, config.genome_config, rng)
         genome.connections[(-2, 2)] = conn3
 
         # Build network - should prune unreachable node 2
@@ -560,24 +560,24 @@ include("test_speciation.jl")
 
         # Add output node
         output_node = NodeGene(0)
-        NEAT.init_attributes!(output_node, config.genome_config, rng)
+        NeatEvolution.init_attributes!(output_node, config.genome_config, rng)
         genome.nodes[0] = output_node
 
         # Add hidden node
         hidden_node = NodeGene(1)
-        NEAT.init_attributes!(hidden_node, config.genome_config, rng)
+        NeatEvolution.init_attributes!(hidden_node, config.genome_config, rng)
         genome.nodes[1] = hidden_node
 
         # Add enabled connection: input -1 -> hidden 1
         conn1 = ConnectionGene((-1, 1), 1)
-        NEAT.init_attributes!(conn1, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn1, config.genome_config, rng)
         conn1.weight = 1.0
         conn1.enabled = true
         genome.connections[(-1, 1)] = conn1
 
         # Add enabled connection: hidden 1 -> output 0
         conn2 = ConnectionGene((1, 0), 2)
-        NEAT.init_attributes!(conn2, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn2, config.genome_config, rng)
         conn2.weight = 1.0
         conn2.enabled = true
         genome.connections[(1, 0)] = conn2
@@ -585,7 +585,7 @@ include("test_speciation.jl")
         # Add disabled connection: input -2 -> output 0
         # This should be ignored when building the network
         conn3 = ConnectionGene((-2, 0), 3)
-        NEAT.init_attributes!(conn3, config.genome_config, rng)
+        NeatEvolution.init_attributes!(conn3, config.genome_config, rng)
         conn3.weight = 10.0  # Large weight that would affect output if not disabled
         conn3.enabled = false
         genome.connections[(-2, 0)] = conn3
@@ -629,26 +629,26 @@ include("test_speciation.jl")
             genome = Genome(1)
 
             output_node = NodeGene(0)
-            NEAT.init_attributes!(output_node, config.genome_config, rng)
+            NeatEvolution.init_attributes!(output_node, config.genome_config, rng)
             genome.nodes[0] = output_node
 
             hidden_node = NodeGene(1)
-            NEAT.init_attributes!(hidden_node, config.genome_config, rng)
+            NeatEvolution.init_attributes!(hidden_node, config.genome_config, rng)
             genome.nodes[1] = hidden_node
 
             # Input -> hidden
             conn1 = ConnectionGene((-1, 1), 1)
-            NEAT.init_attributes!(conn1, config.genome_config, rng)
+            NeatEvolution.init_attributes!(conn1, config.genome_config, rng)
             genome.connections[(-1, 1)] = conn1
 
             # Hidden -> output
             conn2 = ConnectionGene((1, 0), 2)
-            NEAT.init_attributes!(conn2, config.genome_config, rng)
+            NeatEvolution.init_attributes!(conn2, config.genome_config, rng)
             genome.connections[(1, 0)] = conn2
 
             # Self-connection on hidden node
             conn3 = ConnectionGene((1, 1), 3)
-            NEAT.init_attributes!(conn3, config.genome_config, rng)
+            NeatEvolution.init_attributes!(conn3, config.genome_config, rng)
             genome.connections[(1, 1)] = conn3
 
             # For feed-forward network, this should detect the cycle
@@ -666,20 +666,20 @@ include("test_speciation.jl")
 
         # Output layer (node 0)
         output = NodeGene(0)
-        NEAT.init_attributes!(output, config.genome_config, rng)
+        NeatEvolution.init_attributes!(output, config.genome_config, rng)
         genome.nodes[0] = output
 
         # Hidden layer 2 (nodes 1, 2)
         for i in 1:2
             hidden2 = NodeGene(i)
-            NEAT.init_attributes!(hidden2, config.genome_config, rng)
+            NeatEvolution.init_attributes!(hidden2, config.genome_config, rng)
             genome.nodes[i] = hidden2
         end
 
         # Hidden layer 1 (nodes 3, 4, 5)
         for i in 3:5
             hidden1 = NodeGene(i)
-            NEAT.init_attributes!(hidden1, config.genome_config, rng)
+            NeatEvolution.init_attributes!(hidden1, config.genome_config, rng)
             genome.nodes[i] = hidden1
         end
 
@@ -689,7 +689,7 @@ include("test_speciation.jl")
         for input_id in [-1, -2]
             for hidden_id in 3:5
                 conn = ConnectionGene((input_id, hidden_id), innovation)
-                NEAT.init_attributes!(conn, config.genome_config, rng)
+                NeatEvolution.init_attributes!(conn, config.genome_config, rng)
                 genome.connections[(input_id, hidden_id)] = conn
                 innovation += 1
             end
@@ -699,7 +699,7 @@ include("test_speciation.jl")
         for h1_id in 3:5
             for h2_id in 1:2
                 conn = ConnectionGene((h1_id, h2_id), innovation)
-                NEAT.init_attributes!(conn, config.genome_config, rng)
+                NeatEvolution.init_attributes!(conn, config.genome_config, rng)
                 genome.connections[(h1_id, h2_id)] = conn
                 innovation += 1
             end
@@ -708,7 +708,7 @@ include("test_speciation.jl")
         # Connect hidden layer 2 to output
         for h2_id in 1:2
             conn = ConnectionGene((h2_id, 0), innovation)
-            NEAT.init_attributes!(conn, config.genome_config, rng)
+            NeatEvolution.init_attributes!(conn, config.genome_config, rng)
             genome.connections[(h2_id, 0)] = conn
             innovation += 1
         end
@@ -753,13 +753,13 @@ include("test_speciation.jl")
 
             # Output node with specific activation
             output = NodeGene(0)
-            NEAT.init_attributes!(output, config.genome_config, rng)
+            NeatEvolution.init_attributes!(output, config.genome_config, rng)
             output.activation = activation
             genome.nodes[0] = output
 
             # Direct connection from input to output
             conn = ConnectionGene((-1, 0), 1)
-            NEAT.init_attributes!(conn, config.genome_config, rng)
+            NeatEvolution.init_attributes!(conn, config.genome_config, rng)
             conn.weight = 1.0
             genome.connections[(-1, 0)] = conn
 
@@ -1111,7 +1111,7 @@ include("test_speciation.jl")
     end
 
     @testset "Reproduction Spawn Computation" begin
-        using NEAT: compute_spawn
+        using NeatEvolution: compute_spawn
 
         @testset "Spawn adjust 1" begin
             adjusted_fitness = [1.0, 0.0]
@@ -1392,7 +1392,7 @@ include("test_speciation.jl")
             # Add multiple nodes via mutation
             rng = Random.MersenneTwister(100)
             for _ in 1:5
-                success = NEAT.mutate_add_node!(g, temp_config, rng)
+                success = NeatEvolution.mutate_add_node!(g, temp_config, rng)
                 if success
                     # Find the newly added node(s)
                     current_node_ids = Set(keys(g.nodes))
@@ -1415,7 +1415,7 @@ include("test_speciation.jl")
     end
 
     @testset "75% Disable Rule" begin
-        using NEAT: crossover
+        using NeatEvolution: crossover
 
         @testset "One Parent Disabled" begin
             # Create two genes with same key, one disabled and one enabled
@@ -1941,8 +1941,8 @@ include("test_speciation.jl")
                 configure_new!(genome, config.genome_config)
 
                 # Add a hidden node and some connections
-                NEAT.mutate_add_node!(genome, config.genome_config, Random.default_rng())
-                NEAT.mutate_add_connection!(genome, config.genome_config, Random.default_rng())
+                NeatEvolution.mutate_add_node!(genome, config.genome_config, Random.default_rng())
+                NeatEvolution.mutate_add_connection!(genome, config.genome_config, Random.default_rng())
 
                 genome.fitness = 2.5
 
@@ -1993,13 +1993,13 @@ include("test_speciation.jl")
 
                     genome2 = Genome(2)
                     configure_new!(genome2, config.genome_config)
-                    NEAT.mutate_add_node!(genome2, config.genome_config, Random.default_rng())
+                    NeatEvolution.mutate_add_node!(genome2, config.genome_config, Random.default_rng())
                     genome2.fitness = 2.0
 
                     genome3 = Genome(3)
                     configure_new!(genome3, config.genome_config)
-                    NEAT.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
-                    NEAT.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
+                    NeatEvolution.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
+                    NeatEvolution.mutate_add_node!(genome3, config.genome_config, Random.default_rng())
                     genome3.fitness = 3.0
 
                     genomes = [genome1, genome2, genome3]

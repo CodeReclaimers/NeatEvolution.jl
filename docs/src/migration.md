@@ -1,6 +1,6 @@
 # Migration Guide: v0.0.x to v0.1.0
 
-This guide helps you migrate from NEAT.jl v0.0.x to v0.1.0. Version 0.1.0 introduces breaking changes to align the implementation with the original NEAT paper by Stanley & Miikkulainen (2002).
+This guide helps you migrate from NeatEvolution.jl v0.0.x to v0.1.0. Version 0.1.0 introduces breaking changes to align the implementation with the original NEAT paper by Stanley & Miikkulainen (2002).
 
 ## Summary of Changes
 
@@ -179,7 +179,7 @@ Reasons:
 ### Before (v0.0.x)
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # config.toml (old)
 """
@@ -196,7 +196,7 @@ winner = run!(pop, eval_genomes, 100)
 ### After (v0.1.0)
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # config.toml (new)
 """

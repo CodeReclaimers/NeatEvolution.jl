@@ -2,7 +2,7 @@
 
 ## Overview
 
-NEAT.jl uses TOML configuration files to specify algorithm parameters. The configuration file is divided into five main sections:
+NeatEvolution.jl uses TOML configuration files to specify algorithm parameters. The configuration file is divided into five main sections:
 
 1. **[NEAT]** - General algorithm parameters
 2. **[DefaultGenome]** - Genome structure and mutation settings
@@ -229,7 +229,7 @@ min_species_size = 1
 ## Complete Example Configuration
 
 ```toml
-# Complete NEAT.jl configuration file
+# Complete NeatEvolution.jl configuration file
 
 [NEAT]
 pop_size = 150

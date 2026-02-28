@@ -1,4 +1,4 @@
-# NEAT.jl
+# NeatEvolution.jl
 
 [![CI](https://github.com/CodeReclaimers/NEAT/actions/workflows/CI.yaml/badge.svg)](https://github.com/CodeReclaimers/NEAT/actions/workflows/CI.yaml)
 [![codecov](https://codecov.io/gh/CodeReclaimers/NEAT/graph/badge.svg?token=BMK6EVEC48)](https://codecov.io/gh/CodeReclaimers/NEAT)
@@ -61,7 +61,7 @@ Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
 ### Basic Example
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # Define your fitness function
 function eval_genomes(genomes, config)
@@ -90,10 +90,10 @@ See [examples/xor/](examples/xor/) for a complete working example.
 
 ### Advanced: Population Seeding for Transfer Learning
 
-You can seed populations with pre-trained networks from JSON (from neat-python or NEAT.jl):
+You can seed populations with pre-trained networks from JSON (from neat-python or NeatEvolution.jl):
 
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 
@@ -131,7 +131,7 @@ This is useful for:
 ## Example: Solving XOR
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # XOR test cases
 const XOR_INPUTS = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]]
@@ -163,7 +163,7 @@ println("Solution found! Fitness: ", winner.fitness)
 Optional visualization support through Plots.jl:
 
 ```julia
-using NEAT
+using NeatEvolution
 using Plots  # Enables static visualization
 
 stats = StatisticsReporter()
@@ -183,7 +183,7 @@ animate_evolution(stats, config.genome_config, filename="evolution.gif")
 For interactive 3D network visualization with rotation, zoom, and pan:
 
 ```julia
-using NEAT
+using NeatEvolution
 using GLMakie, GraphMakie, Graphs  # Enables interactive visualization
 
 # Create interactive network visualization
@@ -223,7 +223,7 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 
 ```julia
 using Pkg
-Pkg.test("NEAT")
+Pkg.test("NeatEvolution")
 ```
 
 All tests should pass!
@@ -253,7 +253,7 @@ Contributions welcome! Please:
 
 ## Citation
 
-If you use NEAT.jl in your research, please cite the original NEAT paper:
+If you use NeatEvolution.jl in your research, please cite the original NEAT paper:
 
 ```bibtex
 @article{stanley2002evolving,

@@ -4,7 +4,7 @@ XOR Example for NEAT.
 This example evolves a neural network to solve the XOR problem.
 """
 
-using NEAT
+using NeatEvolution
 
 # XOR inputs and expected outputs
 const XOR_INPUTS = [

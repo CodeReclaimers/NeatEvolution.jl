@@ -29,8 +29,8 @@
             population[i] = g
         end
 
-        species_set = NEAT.SpeciesSet(config.species_config)
-        NEAT.speciate!(species_set, config, population, 1)
+        species_set = NeatEvolution.SpeciesSet(config.species_config)
+        NeatEvolution.speciate!(species_set, config, population, 1)
 
         # All identical genomes should be in one species
         species_ids = unique(values(species_set.genome_to_species))
@@ -46,7 +46,7 @@
             config.pop_size, config.fitness_criterion, config.fitness_threshold,
             config.reset_on_extinction, config.no_fitness_termination,
             config.genome_config,
-            NEAT.SpeciesConfig(0.1),  # very low threshold
+            NeatEvolution.SpeciesConfig(0.1),  # very low threshold
             config.stagnation_config,
             config.reproduction_config
         )
@@ -72,8 +72,8 @@
         g3.nodes[1].bias = 5.0
         population[3] = g3
 
-        species_set = NEAT.SpeciesSet(low_threshold_config.species_config)
-        NEAT.speciate!(species_set, low_threshold_config, population, 1)
+        species_set = NeatEvolution.SpeciesSet(low_threshold_config.species_config)
+        NeatEvolution.speciate!(species_set, low_threshold_config, population, 1)
 
         num_species = length(species_set.species)
         @test num_species >= 2
@@ -87,11 +87,11 @@
         g2 = make_genome(2, connections=[((-1, 0), 2.0, 1), ((-2, 0), 1.0, 2)])
 
         # Compute distance directly
-        direct_dist = NEAT.distance(g1, g2, config.genome_config)
+        direct_dist = NeatEvolution.distance(g1, g2, config.genome_config)
 
         # Compute via cache
-        cache = NEAT.GenomeDistanceCache(config.genome_config)
-        cached_dist = NEAT.get_distance(cache, g1, g2)
+        cache = NeatEvolution.GenomeDistanceCache(config.genome_config)
+        cached_dist = NeatEvolution.get_distance(cache, g1, g2)
 
         @test direct_dist ≈ cached_dist
         @test cache.misses == 1
@@ -99,7 +99,7 @@
         println("  Direct distance=$direct_dist, cached=$cached_dist, misses=$(cache.misses)")
 
         # Second lookup should be a cache hit
-        cached_dist2 = NEAT.get_distance(cache, g1, g2)
+        cached_dist2 = NeatEvolution.get_distance(cache, g1, g2)
         @test cached_dist2 ≈ direct_dist
         @test cache.hits == 1
         @test cache.misses == 1
@@ -112,10 +112,10 @@
         g1 = make_genome(1, connections=[((-1, 0), 1.0, 1)])
         g2 = make_genome(2, connections=[((-1, 0), 3.0, 1), ((-2, 0), 1.0, 2)])
 
-        cache = NEAT.GenomeDistanceCache(config.genome_config)
+        cache = NeatEvolution.GenomeDistanceCache(config.genome_config)
 
-        d12 = NEAT.get_distance(cache, g1, g2)
-        d21 = NEAT.get_distance(cache, g2, g1)
+        d12 = NeatEvolution.get_distance(cache, g1, g2)
+        d21 = NeatEvolution.get_distance(cache, g2, g1)
 
         @test d12 ≈ d21
         # First call is a miss, second is a hit (symmetric entry was cached)
@@ -133,8 +133,8 @@
             population[i] = g
         end
 
-        species_set = NEAT.SpeciesSet(config.species_config)
-        NEAT.speciate!(species_set, config, population, 1)
+        species_set = NeatEvolution.SpeciesSet(config.species_config)
+        NeatEvolution.speciate!(species_set, config, population, 1)
 
         for (sid, s) in species_set.species
             @test s.representative !== nothing
@@ -153,8 +153,8 @@
             population[i] = g
         end
 
-        species_set = NEAT.SpeciesSet(config.species_config)
-        NEAT.speciate!(species_set, config, population, 1)
+        species_set = NeatEvolution.SpeciesSet(config.species_config)
+        NeatEvolution.speciate!(species_set, config, population, 1)
         initial_species_count = length(species_set.species)
 
         # Add a very distant genome
@@ -169,7 +169,7 @@
         population[4] = g_far
 
         # Re-speciate with the distant genome
-        NEAT.speciate!(species_set, config, population, 2)
+        NeatEvolution.speciate!(species_set, config, population, 2)
         final_species_count = length(species_set.species)
 
         # The distant genome should have created a new species (or joined existing)
@@ -195,7 +195,7 @@
             ((-1, 0), 1.5, 1),  # matching with A's innov 1, weight diff = 0.5
         ])
 
-        d = NEAT.distance(gA, gB, gc)
+        d = NeatEvolution.distance(gA, gB, gc)
         @test d > 0.0
 
         # Hand-compute expected distance:
@@ -220,7 +220,7 @@
         @test d >= expected_conn - 1e-10
 
         # Symmetric
-        d_rev = NEAT.distance(gB, gA, gc)
+        d_rev = NeatEvolution.distance(gB, gA, gc)
         @test d ≈ d_rev
         println("  Symmetry: d(A,B)=$d, d(B,A)=$d_rev")
     end

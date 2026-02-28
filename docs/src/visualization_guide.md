@@ -2,7 +2,7 @@
 
 ## Overview
 
-NEAT.jl provides comprehensive visualization capabilities to help you understand and debug the evolutionary process. This guide covers all visualization features with practical examples and best practices.
+NeatEvolution.jl provides comprehensive visualization capabilities to help you understand and debug the evolutionary process. This guide covers all visualization features with practical examples and best practices.
 
 ## Setup
 
@@ -17,10 +17,10 @@ Pkg.add("Plots")
 
 ### Enabling Visualization
 
-Simply load Plots.jl after loading NEAT.jl:
+Simply load Plots.jl after loading NeatEvolution.jl:
 
 ```julia
-using NEAT
+using NeatEvolution
 using Plots  # This automatically loads the visualization extension
 
 # Now visualization functions are available
@@ -39,7 +39,7 @@ The visualization extension uses Julia's package extension system (Julia 1.9+), 
 Before you can visualize anything, you need to collect statistics during evolution:
 
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 pop = Population(config)
@@ -371,7 +371,7 @@ animate_evolution(stats, config.genome_config,
 ### Typical Visualization Pipeline
 
 ```julia
-using NEAT
+using NeatEvolution
 using Plots
 
 # 1. Setup
@@ -432,7 +432,7 @@ println("All visualizations saved to output/")
 ### Multi-Run Comparison
 
 ```julia
-using NEAT
+using NeatEvolution
 using Plots
 
 function run_experiment(config, name)
@@ -495,7 +495,7 @@ For automated testing or server environments:
 # Set GR backend to non-interactive mode
 ENV["GKSwstype"] = "100"
 
-using NEAT
+using NeatEvolution
 using Plots
 
 # All visualization functions work normally
@@ -507,7 +507,7 @@ plot_fitness(stats, filename="fitness.png", show_plot=false)
 
 ```julia
 # In your CI script
-using NEAT
+using NeatEvolution
 using Plots
 
 # Suppress all display attempts
@@ -529,9 +529,9 @@ save_statistics(stats, prefix="artifacts/run")
 
 **Problem: "Plots.jl not loaded" error**
 ```julia
-# Solution: Load Plots.jl after NEAT.jl
-using NEAT
-using Plots  # Must come after NEAT
+# Solution: Load Plots.jl after NeatEvolution.jl
+using NeatEvolution
+using Plots  # Must come after NeatEvolution
 ```
 
 **Problem: Blank or empty plots**
@@ -660,7 +660,7 @@ savefig(p, "publication_fitness.pdf")  # Vector format
 
 ```julia
 # In Jupyter/Pluto notebooks
-using NEAT
+using NeatEvolution
 using Plots
 
 # Evolution
@@ -805,7 +805,7 @@ save_statistics(stats, prefix="output/data/run")
 
 ## See Also
 
-- [Getting Started Guide](getting_started.md) - Basic NEAT.jl usage
+- [Getting Started Guide](getting_started.md) - Basic NeatEvolution.jl usage
 - [XOR Example](xor_example.md) - Complete example with visualization
 - [API Reference](api_reference.md) - Function signatures and details
 - [Configuration Reference](config_file.md) - Tuning parameters that affect evolution

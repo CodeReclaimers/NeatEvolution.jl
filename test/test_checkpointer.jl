@@ -10,7 +10,7 @@ Tests verify:
   6. Manual save via save_checkpoint
 """
 
-using NEAT: Population, Config, load_config, Genome, GenomeConfig,
+using NeatEvolution: Population, Config, load_config, Genome, GenomeConfig,
             Checkpointer, CheckpointData, save_checkpoint, restore_checkpoint,
             add_reporter!, run!, FeedForwardNetwork, activate!,
             StdOutReporter, SpeciesSet

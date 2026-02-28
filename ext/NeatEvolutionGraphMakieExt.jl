@@ -1,6 +1,6 @@
-module NEATGraphMakieExt
+module NeatEvolutionGraphMakieExt
 
-using NEAT
+using NeatEvolution
 using GLMakie
 using GraphMakie
 using GraphMakie.NetworkLayout
@@ -32,7 +32,7 @@ This function creates a fully interactive 3D visualization of a neural network w
 
 # Example
 ```julia
-using NEAT
+using NeatEvolution
 using GLMakie
 using GraphMakie
 using Graphs
@@ -72,8 +72,8 @@ fig = draw_network_interactive(winner, config.genome_config,
 - **Hover over nodes**: See node information (future enhancement)
 - **Double-click**: Reset view
 """
-function NEAT.draw_network_interactive(genome::NEAT.Genome,
-                                        config::NEAT.GenomeConfig;
+function NeatEvolution.draw_network_interactive(genome::NeatEvolution.Genome,
+                                        config::NeatEvolution.GenomeConfig;
                                         layout::Symbol=:spring,
                                         node_size::Float64=25.0,
                                         edge_width_scale::Float64=3.0,
@@ -102,7 +102,7 @@ function NEAT.draw_network_interactive(genome::NEAT.Genome,
 
     # Prune unused nodes if requested
     if prune_unused
-        required = NEAT.required_for_output(inputs, outputs, connections)
+        required = NeatEvolution.required_for_output(inputs, outputs, connections)
 
         # Filter connections
         filtered_connections = Tuple{Int,Int}[]
@@ -323,8 +323,8 @@ fig = draw_network_comparison_interactive(
 display(fig)
 ```
 """
-function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
-                                                   config::NEAT.GenomeConfig;
+function NeatEvolution.draw_network_comparison_interactive(genomes::Vector{NeatEvolution.Genome},
+                                                   config::NeatEvolution.GenomeConfig;
                                                    labels::Union{Nothing,Vector{String}}=nothing,
                                                    layout::Symbol=:spring,
                                                    node_size::Float64=20.0,
@@ -341,7 +341,7 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
 
     for (idx, (genome, label)) in enumerate(zip(genomes, labels))
         # Create a temporary figure for this genome
-        temp_fig = NEAT.draw_network_interactive(genome, config,
+        temp_fig = NeatEvolution.draw_network_interactive(genome, config,
                                                    layout=layout,
                                                    node_size=node_size,
                                                    prune_unused=prune_unused,
@@ -372,7 +372,7 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
         end
 
         if prune_unused
-            required = NEAT.required_for_output(inputs, outputs, connections)
+            required = NeatEvolution.required_for_output(inputs, outputs, connections)
         else
             required = union(Set(inputs), Set(outputs), Set(keys(genome.nodes)))
         end
@@ -405,4 +405,4 @@ function NEAT.draw_network_comparison_interactive(genomes::Vector{NEAT.Genome},
     return fig
 end
 
-end  # module
+end  # module NeatEvolutionGraphMakieExt

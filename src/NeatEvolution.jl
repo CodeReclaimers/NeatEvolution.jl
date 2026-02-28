@@ -4,7 +4,7 @@ NEAT (NeuroEvolution of Augmenting Topologies) implementation in Julia.
 This package provides a complete implementation of the NEAT algorithm for
 evolving artificial neural networks through genetic algorithms.
 """
-module NEAT
+module NeatEvolution
 
 using Random
 using Statistics
@@ -196,7 +196,7 @@ Requires: `using GLMakie, GraphMakie, Graphs`
 - See weight information
 - Multiple layout algorithms
 
-See `NEATGraphMakieExt` extension for full documentation.
+See `NeatEvolutionGraphMakieExt` extension for full documentation.
 """
 function draw_network_interactive end
 
@@ -207,8 +207,8 @@ Create an interactive side-by-side comparison of multiple genome networks.
 
 Requires: `using GLMakie, GraphMakie, Graphs`
 
-See `NEATGraphMakieExt` extension for full documentation.
+See `NeatEvolutionGraphMakieExt` extension for full documentation.
 """
 function draw_network_comparison_interactive end
 
-end # module NEAT
+end # module NeatEvolution

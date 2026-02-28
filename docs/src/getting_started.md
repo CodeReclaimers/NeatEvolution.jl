@@ -1,8 +1,8 @@
-# Getting Started with NEAT.jl
+# Getting Started with NeatEvolution.jl
 
 ## Overview
 
-NEAT.jl is a Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), an evolutionary algorithm that creates artificial neural networks. This guide will help you get started with using NEAT.jl in your projects.
+NeatEvolution.jl is a Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), an evolutionary algorithm that creates artificial neural networks. This guide will help you get started with using NeatEvolution.jl in your projects.
 
 ## What is NEAT?
 
@@ -39,7 +39,7 @@ Here's a minimal example that evolves a neural network to solve the XOR problem:
 ### 1. Define Your Fitness Function
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # XOR test cases
 const XOR_INPUTS = [
@@ -240,10 +240,10 @@ end
 
 ## Visualization
 
-NEAT.jl provides optional visualization capabilities through Plots.jl:
+NeatEvolution.jl provides optional visualization capabilities through Plots.jl:
 
 ```julia
-using NEAT
+using NeatEvolution
 using Plots  # Load Plots to enable visualization
 
 # ... run evolution with StatisticsReporter ...
@@ -300,7 +300,7 @@ feed_forward = false  # Allow recurrent connections
 ### Custom Activation Functions
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # Define custom activation
 my_activation(x) = x^3
@@ -317,11 +317,11 @@ add_activation_function!(:cubic, my_activation)
 You can seed populations with pre-evolved networks imported from JSON files. This is useful for transfer learning, cross-library experiments, or checkpointing:
 
 ```julia
-using NEAT
+using NeatEvolution
 
 config = load_config("config.toml")
 
-# Import genomes from JSON (neat-python or NEAT.jl format)
+# Import genomes from JSON (neat-python or NeatEvolution.jl format)
 imported_genomes = [
     import_network_json("winner1.json", config.genome_config),
     import_network_json("winner2.json", config.genome_config)

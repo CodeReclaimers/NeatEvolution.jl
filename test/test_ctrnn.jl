@@ -6,8 +6,8 @@ reset, set_node_value!, variable dt handling, and determinism.
 """
 
 using Test
-using NEAT
-using NEAT: NodeGene, ConnectionGene, Genome, GenomeConfig,
+using NeatEvolution
+using NeatEvolution: NodeGene, ConnectionGene, Genome, GenomeConfig,
             CTRNNNetwork, CTRNNNodeEval, advance!, reset!, set_node_value!,
             get_activation_function, get_aggregation_function
 

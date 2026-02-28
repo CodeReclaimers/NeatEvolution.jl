@@ -1,7 +1,7 @@
 # Interactive Visualization Example for XOR Problem
 # This example demonstrates the interactive visualization capabilities using GraphMakie
 
-using NEAT
+using NeatEvolution
 
 # XOR test cases
 const XOR_INPUTS = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]]

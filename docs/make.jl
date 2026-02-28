@@ -1,8 +1,8 @@
-using Documenter, NEAT
+using Documenter, NeatEvolution
 
 makedocs(
-    sitename = "NEAT.jl",
-    modules = [NEAT],
+    sitename = "NeatEvolution.jl",
+    modules = [NeatEvolution],
     warnonly = [:missing_docs],
     pages = [
         "Home" => "index.md",

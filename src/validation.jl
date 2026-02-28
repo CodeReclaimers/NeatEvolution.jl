@@ -1,5 +1,5 @@
 """
-Enhanced configuration validation for NEAT.jl
+Enhanced configuration validation for NeatEvolution.jl
 
 Provides stricter validation with helpful error messages,
 typo detection, and suggestions for correct values.

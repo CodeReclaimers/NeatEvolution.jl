@@ -9,7 +9,7 @@ Run from the repository root:
     julia --project examples/cartpole/evolve.jl
 """
 
-using NEAT
+using NeatEvolution
 using Random
 
 include(joinpath(@__DIR__, "cartpole.jl"))

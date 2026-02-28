@@ -10,7 +10,7 @@ Usage:
     julia --project examples/sequence/evolve.jl
 """
 
-using NEAT
+using NeatEvolution
 using Random
 
 # Generate test sequences: pairs of (sequence, label)

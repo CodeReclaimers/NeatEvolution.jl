@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide addresses common problems and errors you may encounter when using NEAT.jl.
+This guide addresses common problems and errors you may encounter when using NeatEvolution.jl.
 
 ## Table of Contents
 
@@ -482,8 +482,8 @@ Pkg.add("Plots")
 
 Then load it:
 ```julia
-using NEAT
-using Plots  # Must come after NEAT
+using NeatEvolution
+using Plots  # Must come after NeatEvolution
 
 plot_fitness(stats, filename="fitness.png")
 ```
@@ -568,7 +568,7 @@ If you're still stuck:
 
 4. **Open an issue** on GitHub with:
    - Julia version (`VERSION`)
-   - NEAT.jl version
+   - NeatEvolution.jl version
    - Complete error message
    - Minimal reproducible code
    - What you've already tried

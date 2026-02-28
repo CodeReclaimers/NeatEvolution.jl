@@ -12,7 +12,7 @@ multiple timesteps. This exercises:
   - Reproducibility across independent network instances
 """
 
-using NEAT: NodeGene, ConnectionGene, Genome, GenomeConfig, NodeEval,
+using NeatEvolution: NodeGene, ConnectionGene, Genome, GenomeConfig, NodeEval,
             FeedForwardNetwork, RecurrentNetwork, activate!, reset!,
             get_activation_function, get_aggregation_function,
             sigmoid_activation, identity_activation, tanh_activation,

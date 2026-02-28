@@ -9,7 +9,7 @@ Usage:
     julia --project examples/iznn_pattern/evolve.jl
 """
 
-using NEAT
+using NeatEvolution
 
 const SIM_DURATION_MS = 100.0  # simulation duration in milliseconds
 const DT_MS = 1.0             # time step in milliseconds

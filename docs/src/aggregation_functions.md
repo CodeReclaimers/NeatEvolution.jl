@@ -21,7 +21,7 @@ Specifically:
 
 ## Built-in Aggregation Functions
 
-NEAT.jl provides 7 aggregation functions:
+NeatEvolution.jl provides 7 aggregation functions:
 
 ### sum
 
@@ -320,7 +320,7 @@ aggregation_options = ["sum", "product", "max", "min"]
 ## Adding Custom Aggregation Functions
 
 ```julia
-using NEAT
+using NeatEvolution
 
 # Define custom aggregation
 function custom_aggregation(x::Vector{Float64})

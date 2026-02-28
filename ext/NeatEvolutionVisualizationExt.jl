@@ -1,6 +1,6 @@
-module NEATVisualizationExt
+module NeatEvolutionVisualizationExt
 
-using NEAT
+using NeatEvolution
 using Plots
 
 """
@@ -15,7 +15,7 @@ Shows best fitness, average fitness, and ±1 standard deviation bands.
 - `title::String="Fitness Evolution"`: Plot title
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.plot_fitness(reporter::NEAT.StatisticsReporter;
+function NeatEvolution.plot_fitness(reporter::NeatEvolution.StatisticsReporter;
                            ylog::Bool=false,
                            filename::String="fitness.png",
                            title::String="Fitness Evolution",
@@ -27,8 +27,8 @@ function NEAT.plot_fitness(reporter::NEAT.StatisticsReporter;
 
     generation = 1:length(reporter.most_fit_genomes)
     best_fitness = [g.fitness === nothing ? 0.0 : g.fitness for g in reporter.most_fit_genomes]
-    avg_fitness = NEAT.get_fitness_mean(reporter)
-    stdev_fitness = NEAT.get_fitness_stdev(reporter)
+    avg_fitness = NeatEvolution.get_fitness_mean(reporter)
+    stdev_fitness = NeatEvolution.get_fitness_stdev(reporter)
 
     p = plot(generation, avg_fitness,
              label="Average",
@@ -82,11 +82,11 @@ Plot species sizes over generations as a stacked area chart.
 - `title::String="Species Over Time"`: Plot title
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.plot_species(reporter::NEAT.StatisticsReporter;
+function NeatEvolution.plot_species(reporter::NeatEvolution.StatisticsReporter;
                            filename::String="speciation.png",
                            title::String="Species Over Time",
                            show_plot::Bool=false)
-    species_sizes = NEAT.get_species_sizes(reporter)
+    species_sizes = NeatEvolution.get_species_sizes(reporter)
 
     if isempty(species_sizes)
         @warn "No species data to plot"
@@ -147,7 +147,7 @@ Plot fitness comparison between multiple runs.
 - `title::String="Fitness Comparison"`: Plot title
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.plot_fitness_comparison(reporters::Vector{NEAT.StatisticsReporter},
+function NeatEvolution.plot_fitness_comparison(reporters::Vector{NeatEvolution.StatisticsReporter},
                                       labels::Vector{String};
                                       filename::String="fitness_comparison.png",
                                       title::String="Fitness Comparison",
@@ -204,8 +204,8 @@ Creates a visualization of the network topology showing:
 - `node_colors::Union{Nothing, Dict}=nothing`: Optional custom colors for nodes
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.draw_net(genome::NEAT.Genome,
-                       config::NEAT.GenomeConfig;
+function NeatEvolution.draw_net(genome::NeatEvolution.Genome,
+                       config::NeatEvolution.GenomeConfig;
                        filename::String="network.png",
                        node_names::Union{Nothing, Dict}=nothing,
                        show_disabled::Bool=true,
@@ -218,7 +218,7 @@ function NEAT.draw_net(genome::NEAT.Genome,
 
     # Determine which nodes to include
     if prune_unused
-        used_nodes = NEAT.required_for_output(config.input_keys, config.output_keys,
+        used_nodes = NeatEvolution.required_for_output(config.input_keys, config.output_keys,
                                              connection_tuples)
     else
         used_nodes = Set(keys(genome.nodes))
@@ -229,7 +229,7 @@ function NEAT.draw_net(genome::NEAT.Genome,
     nodes_list = sort(collect(used_nodes))
 
     # Compute node layers for layout
-    layers = NEAT.feed_forward_layers(config.input_keys, config.output_keys,
+    layers = NeatEvolution.feed_forward_layers(config.input_keys, config.output_keys,
                                      connection_tuples)
 
     # Create layer mapping
@@ -370,8 +370,8 @@ Draw multiple genomes in a grid layout for comparison.
 - `labels::Union{Nothing, Vector{String}}=nothing`: Optional labels for each genome
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.draw_net_comparison(genomes::Vector{NEAT.Genome},
-                                   config::NEAT.GenomeConfig;
+function NeatEvolution.draw_net_comparison(genomes::Vector{NeatEvolution.Genome},
+                                   config::NeatEvolution.GenomeConfig;
                                    filename::String="networks.png",
                                    labels::Union{Nothing, Vector{String}}=nothing,
                                    show_plot::Bool=false)
@@ -382,7 +382,7 @@ function NEAT.draw_net_comparison(genomes::Vector{NEAT.Genome},
         label = labels !== nothing && i <= length(labels) ? labels[i] : "Genome $i"
 
         # Create plot for this genome (without saving)
-        p = NEAT.draw_net(genome, config, filename="", show_plot=false)
+        p = NeatEvolution.draw_net(genome, config, filename="", show_plot=false)
 
         # Update title
         plot!(p, title=label)
@@ -424,8 +424,8 @@ classification, or control tasks with 2 inputs.
 - `title::String="Network Activation"`: Plot title
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.plot_activation_heatmap(genome::NEAT.Genome,
-                                       config::NEAT.GenomeConfig;
+function NeatEvolution.plot_activation_heatmap(genome::NeatEvolution.Genome,
+                                       config::NeatEvolution.GenomeConfig;
                                        x_range::Tuple{Float64, Float64}=(0.0, 1.0),
                                        y_range::Tuple{Float64, Float64}=(0.0, 1.0),
                                        resolution::Int=50,
@@ -441,7 +441,7 @@ function NEAT.plot_activation_heatmap(genome::NEAT.Genome,
     end
 
     # Create network
-    net = NEAT.FeedForwardNetwork(genome, config)
+    net = NeatEvolution.FeedForwardNetwork(genome, config)
 
     # Create grid of input values
     x_vals = range(x_range[1], x_range[2], length=resolution)
@@ -452,7 +452,7 @@ function NEAT.plot_activation_heatmap(genome::NEAT.Genome,
     for (i, x) in enumerate(x_vals)
         for (j, y) in enumerate(y_vals)
             inputs = [x, y]
-            outputs = NEAT.activate!(net, inputs)
+            outputs = NeatEvolution.activate!(net, inputs)
             z[j, i] = length(outputs) >= output_index ? outputs[output_index] : 0.0
         end
     end
@@ -493,8 +493,8 @@ Shows how different genomes respond to the same input space.
 - `filename::String="activation_comparison.png"`: Output filename
 - `show_plot::Bool=false`: Display the plot interactively
 """
-function NEAT.plot_activation_comparison(genomes::Vector{NEAT.Genome},
-                                          config::NEAT.GenomeConfig;
+function NeatEvolution.plot_activation_comparison(genomes::Vector{NeatEvolution.Genome},
+                                          config::NeatEvolution.GenomeConfig;
                                           x_range::Tuple{Float64, Float64}=(0.0, 1.0),
                                           y_range::Tuple{Float64, Float64}=(0.0, 1.0),
                                           resolution::Int=50,
@@ -507,7 +507,7 @@ function NEAT.plot_activation_comparison(genomes::Vector{NEAT.Genome},
     for (i, genome) in enumerate(genomes)
         label = labels !== nothing && i <= length(labels) ? labels[i] : "Genome $i"
 
-        p = NEAT.plot_activation_heatmap(genome, config,
+        p = NeatEvolution.plot_activation_heatmap(genome, config,
                                           x_range=x_range,
                                           y_range=y_range,
                                           resolution=resolution,
@@ -557,8 +557,8 @@ Creates a GIF showing how the best network evolves over time.
 - `show_disabled::Bool=false`: Show disabled connections
 - `node_names::Union{Nothing, Dict}=nothing`: Custom node names
 """
-function NEAT.animate_evolution(reporter::NEAT.StatisticsReporter,
-                                 config::NEAT.GenomeConfig;
+function NeatEvolution.animate_evolution(reporter::NeatEvolution.StatisticsReporter,
+                                 config::NeatEvolution.GenomeConfig;
                                  filename::String="evolution.gif",
                                  fps::Int=2,
                                  show_disabled::Bool=false,
@@ -584,7 +584,7 @@ function NEAT.animate_evolution(reporter::NEAT.StatisticsReporter,
 
         title = "Generation $idx | Fitness: $fitness"
 
-        NEAT.draw_net(genome, config,
+        NeatEvolution.draw_net(genome, config,
                      filename="",
                      node_names=node_names,
                      show_disabled=show_disabled,
@@ -599,4 +599,4 @@ function NEAT.animate_evolution(reporter::NEAT.StatisticsReporter,
     return anim
 end
 
-end # module NEATVisualizationExt
+end # module NeatEvolutionVisualizationExt
