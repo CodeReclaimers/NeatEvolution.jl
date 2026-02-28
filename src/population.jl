@@ -152,10 +152,7 @@ function adjust_counters!(reproduction::Reproduction, genome_config::GenomeConfi
     genome_config.node_indexer[] = max_node_id + 1
     genome_config.innovation_indexer[] = max_innovation + 1
 
-    println("Adjusted counters for $(length(genomes)) initial genomes:")
-    println("  - Next genome ID: $(reproduction.genome_indexer[])")
-    println("  - Next node ID: $(genome_config.node_indexer[])")
-    println("  - Next innovation number: $(genome_config.innovation_indexer[])")
+    @info "Adjusted counters for $(length(genomes)) initial genomes" next_genome_id=reproduction.genome_indexer[] next_node_id=genome_config.node_indexer[] next_innovation=genome_config.innovation_indexer[]
 end
 
 """Add a reporter for tracking progress."""
@@ -164,12 +161,41 @@ function add_reporter!(pop::Population, reporter::Reporter)
 end
 
 """
-Run NEAT evolution for n generations (or until solution found).
+    run!(pop::Population, fitness_function::Function, n, rng=Random.GLOBAL_RNG)
+
+Run NEAT evolution for `n` generations (or until solution found).
+
+This is a convenience wrapper around the keyword-based `run!`. See the keyword
+form for additional termination options (`time_limit_seconds`, `max_evaluations`).
 """
-function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing}=nothing,
+function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing},
              rng::AbstractRNG=Random.GLOBAL_RNG)
-    if pop.config.no_fitness_termination && n === nothing
-        error("Cannot have no generational limit with no fitness termination")
+    run!(pop, fitness_function; generations=n, rng=rng)
+end
+
+"""
+    run!(pop::Population, fitness_function::Function;
+         generations=nothing, max_evaluations=nothing,
+         time_limit_seconds=nothing, rng=Random.GLOBAL_RNG)
+
+Run NEAT evolution with keyword-based termination conditions.
+
+# Keyword Arguments
+- `generations::Union{Int, Nothing}`: Maximum number of generations to run.
+- `max_evaluations::Union{Int, Nothing}`: Stop after this many total fitness evaluations.
+- `time_limit_seconds::Union{Float64, Nothing}`: Wall-clock time limit in seconds.
+- `rng::AbstractRNG`: Random number generator.
+
+Multiple termination conditions can be combined; evolution stops when any is met.
+"""
+function run!(pop::Population, fitness_function::Function;
+              generations::Union{Int, Nothing}=nothing,
+              max_evaluations::Union{Int, Nothing}=nothing,
+              time_limit_seconds::Union{Float64, Nothing}=nothing,
+              rng::AbstractRNG=Random.GLOBAL_RNG)
+    n = generations
+    if pop.config.no_fitness_termination && n === nothing && max_evaluations === nothing && time_limit_seconds === nothing
+        error("Cannot have no termination condition with no fitness termination")
     end
 
     # Determine fitness criterion function
@@ -183,9 +209,21 @@ function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing
         error("Unknown fitness criterion: $(pop.config.fitness_criterion)")
     end
 
+    start_time = time()
+    total_evaluations = 0
     k = 0
     while n === nothing || k < n
         k += 1
+
+        # Check time limit before starting a new generation
+        if time_limit_seconds !== nothing && (time() - start_time) >= time_limit_seconds
+            break
+        end
+
+        # Check evaluation budget
+        if max_evaluations !== nothing && total_evaluations >= max_evaluations
+            break
+        end
 
         # Report generation start
         for reporter in pop.reporters
@@ -195,6 +233,7 @@ function run!(pop::Population, fitness_function::Function, n::Union{Int, Nothing
         # Evaluate all genomes
         genome_list = collect(pop.population)
         fitness_function(genome_list, pop.config)
+        total_evaluations += length(genome_list)
 
         # Find best genome
         best = nothing

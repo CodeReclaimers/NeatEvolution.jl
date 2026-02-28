@@ -264,5 +264,5 @@ function save_statistics(reporter::StatisticsReporter; prefix="neat_stats")
         end
     end
 
-    println("Statistics saved to $(prefix)_*.csv")
+    @info "Statistics saved" prefix
 end

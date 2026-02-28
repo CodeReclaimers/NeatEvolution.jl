@@ -10,7 +10,7 @@ A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies
 NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural networks. This implementation is compliant with the original [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf) and provides a robust platform for neuroevolution experiments.
 
 **What this library is:**
-- A faithful implementation of the NEAT algorithm (v1.0.0)
+- A faithful implementation of the NEAT algorithm (v0.1.0)
 - A flexible platform for neuroevolution experiments
 - A starting point for custom neuroevolution solutions
 
@@ -126,7 +126,7 @@ This is useful for:
 📖 **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Common problems and solutions
 📖 **[FAQ](docs/faq.md)** - Frequently asked questions
-📖 **[Migration Guide v0→v1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v1.0.0
+📖 **[Migration Guide v0→v0.1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v0.1.0
 
 ## Example: Solving XOR
 
@@ -205,7 +205,7 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 
 ## Version History
 
-**v1.0.0** (Current) - NEAT Paper Compliance + Enhancements
+**v0.1.0** (Current) - NEAT Paper Compliance + Enhancements
 - ✅ Innovation numbers implemented
 - ✅ Crossover disable rule fixed (75%)
 - ✅ Compatibility distance formula corrected
@@ -215,7 +215,7 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 - ✅ Comprehensive troubleshooting guide and FAQ
 - See [Migration Guide](docs/MIGRATION_v0_to_v1.md) for upgrading
 
-**v0.1.0** - Initial Implementation
+**v0.0.x** - Initial Implementation
 - Basic NEAT algorithm
 - Statistics and visualization (Phases 1-3)
 

@@ -357,7 +357,7 @@ include("test_speciation.jl")
             node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, Tuple{Int, Float64}[])]
             values = Dict{Int, Float64}(0 => 0.0)
 
-            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Float64[])
+            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Float64[], Vector{Float64}(undef, 1))
 
             @test net.values[0] == 0.0
 
@@ -377,7 +377,7 @@ include("test_speciation.jl")
             node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, [(-1, 1.0)])]
             values = Dict{Int, Float64}(-1 => 0.0, 0 => 0.0)
 
-            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Vector{Float64}(undef, 1))
+            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Vector{Float64}(undef, 1), Vector{Float64}(undef, 1))
 
             @test net.values[0] == 0.0
 
@@ -726,7 +726,7 @@ include("test_speciation.jl")
 
         # Test network evaluation
         inputs = [0.5, -0.3]
-        output = activate!(net, inputs)
+        output = copy(activate!(net, inputs))
         @test length(output) == 1
         @test !isnan(output[1]) && !isinf(output[1])
 

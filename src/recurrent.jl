@@ -16,13 +16,14 @@ Maintains internal state between activations via `values` (current timestep)
 and `prev_values` (previous timestep). Cycles are handled by reading inputs
 from prev_values while writing outputs to values.
 """
-mutable struct RecurrentNetwork
+mutable struct RecurrentNetwork <: AbstractNetwork
     input_nodes::Vector{Int}
     output_nodes::Vector{Int}
     node_evals::Vector{NodeEval}
     values::Dict{Int, Float64}
     prev_values::Dict{Int, Float64}
-    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
+    _buffer::Vector{Float64}   # pre-allocated workspace for aggregation
+    _output::Vector{Float64}   # pre-allocated output buffer (returned by activate!)
 end
 
 """
@@ -87,7 +88,9 @@ function RecurrentNetwork(genome::Genome, config::GenomeConfig)
     max_links = isempty(node_evals) ? 0 : maximum(length(last(ne)) for ne in node_evals)
     _buffer = Vector{Float64}(undef, max_links)
 
-    RecurrentNetwork(config.input_keys, config.output_keys, node_evals, values, prev_values, _buffer)
+    _output = Vector{Float64}(undef, length(config.output_keys))
+
+    RecurrentNetwork(config.input_keys, config.output_keys, node_evals, values, prev_values, _buffer, _output)
 end
 
 """
@@ -96,6 +99,9 @@ Activate the recurrent network with given inputs and return outputs.
 Reads input values from prev_values (previous timestep) and writes computed
 values to values (current timestep). After all nodes are computed, copies
 values to prev_values for the next call.
+
+Returns a reference to an internal buffer. Callers who need to store results
+across multiple `activate!` calls should copy the returned vector.
 """
 function activate!(network::RecurrentNetwork, inputs::Vector{Float64})
     if length(network.input_nodes) != length(inputs)
@@ -125,8 +131,11 @@ function activate!(network::RecurrentNetwork, inputs::Vector{Float64})
         network.prev_values[k] = v
     end
 
-    # Return output values
-    return [network.values[i] for i in network.output_nodes]
+    # Fill pre-allocated output buffer
+    for (j, i) in enumerate(network.output_nodes)
+        network._output[j] = network.values[i]
+    end
+    return network._output
 end
 
 """
@@ -142,3 +151,6 @@ function reset!(network::RecurrentNetwork)
         network.prev_values[k] = 0.0
     end
 end
+
+"""Convenience constructor accepting `Config` instead of `GenomeConfig`."""
+RecurrentNetwork(genome::Genome, config::Config) = RecurrentNetwork(genome, config.genome_config)

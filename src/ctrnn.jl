@@ -37,14 +37,15 @@ CTRNN network with double-buffered state for integration.
 Uses two value buffers and flips between them during integration steps,
 matching neat-python's implementation.
 """
-mutable struct CTRNNNetwork
+mutable struct CTRNNNetwork <: AbstractNetwork
     input_nodes::Vector{Int}
     output_nodes::Vector{Int}
     node_evals::Dict{Int, CTRNNNodeEval}
     values::Vector{Dict{Int, Float64}}   # [buffer1, buffer2]
     active::Int                          # 1 or 2 (current read buffer)
     time_seconds::Float64
-    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
+    _buffer::Vector{Float64}   # pre-allocated workspace for aggregation
+    _output::Vector{Float64}   # pre-allocated output buffer (returned by advance!)
 end
 
 """
@@ -113,8 +114,10 @@ function CTRNNNetwork(genome::Genome, config::GenomeConfig)
     # Pre-allocate buffer for aggregation inputs
     _buffer = Vector{Float64}(undef, max_links)
 
+    _output = Vector{Float64}(undef, length(config.output_keys))
+
     CTRNNNetwork(config.input_keys, config.output_keys, node_evals,
-                 [buf1, buf2], 1, 0.0, _buffer)
+                 [buf1, buf2], 1, 0.0, _buffer, _output)
 end
 
 """
@@ -165,8 +168,12 @@ function advance!(net::CTRNNNetwork, inputs::Vector{Float64},
         net.time_seconds += dt
     end
 
-    # Return output values from the current active buffer
-    return [net.values[net.active][i] for i in net.output_nodes]
+    # Fill pre-allocated output buffer
+    active_buf = net.values[net.active]
+    for (j, i) in enumerate(net.output_nodes)
+        net._output[j] = active_buf[i]
+    end
+    return net._output
 end
 
 """
@@ -193,3 +200,6 @@ function set_node_value!(net::CTRNNNetwork, node_key::Int, value::Float64)
     net.values[1][node_key] = value
     net.values[2][node_key] = value
 end
+
+"""Convenience constructor accepting `Config` instead of `GenomeConfig`."""
+CTRNNNetwork(genome::Genome, config::Config) = CTRNNNetwork(genome, config.genome_config)

@@ -13,6 +13,27 @@ using JSON
 using Serialization
 using FunctionWrappers: FunctionWrapper
 
+"""
+    AbstractNetwork
+
+Abstract supertype for all NEAT network evaluators.
+
+Subtypes: `FeedForwardNetwork`, `RecurrentNetwork`, `CTRNNNetwork`, `IZNNNetwork`
+"""
+abstract type AbstractNetwork end
+
+"""Return the input node IDs for a network."""
+input_nodes(net::AbstractNetwork) = net.input_nodes
+
+"""Return the output node IDs for a network."""
+output_nodes(net::AbstractNetwork) = net.output_nodes
+
+"""Return the number of input nodes."""
+num_inputs(net::AbstractNetwork) = length(net.input_nodes)
+
+"""Return the number of output nodes."""
+num_outputs(net::AbstractNetwork) = length(net.output_nodes)
+
 # Include all components
 include("utils.jl")
 include("attributes.jl")
@@ -41,6 +62,7 @@ export Config, load_config
 export GenomeConfig, SpeciesConfig, StagnationConfig, ReproductionConfig
 export Genome, NodeGene, ConnectionGene
 export Population, CompleteExtinctionException
+export AbstractNetwork, input_nodes, output_nodes, num_inputs, num_outputs
 export FeedForwardNetwork, RecurrentNetwork, reset!
 export CTRNNNetwork, CTRNNNodeEval, advance!, set_node_value!
 export IZNNNetwork, IZNeuron, set_inputs!

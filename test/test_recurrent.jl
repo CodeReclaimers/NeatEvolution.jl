@@ -101,9 +101,9 @@ end
 
         net = RecurrentNetwork(genome, config)
 
-        out1 = activate!(net, [1.0])
-        out2 = activate!(net, [1.0])
-        out3 = activate!(net, [1.0])
+        out1 = copy(activate!(net, [1.0]))
+        out2 = copy(activate!(net, [1.0]))
+        out3 = copy(activate!(net, [1.0]))
 
         println("  State persistence: t1=$(out1[1]), t2=$(out2[1]), t3=$(out3[1])")
         @test out1[1] ≈ 1.0 atol=1e-10
@@ -125,7 +125,7 @@ end
         net = RecurrentNetwork(genome, config)
 
         # Run a few timesteps to build state
-        out_before_1 = activate!(net, [1.0])
+        out_before_1 = copy(activate!(net, [1.0]))
         activate!(net, [1.0])
         activate!(net, [1.0])
 
@@ -155,9 +155,9 @@ end
 
         net = RecurrentNetwork(genome, config)
 
-        out1 = activate!(net, [1.0])
-        out2 = activate!(net, [1.0])
-        out3 = activate!(net, [1.0])
+        out1 = copy(activate!(net, [1.0]))
+        out2 = copy(activate!(net, [1.0]))
+        out3 = copy(activate!(net, [1.0]))
 
         println("  Self-connection with bias: t1=$(out1[1]), t2=$(out2[1]), t3=$(out3[1])")
         @test out1[1] ≈ 2.5 atol=1e-10
@@ -212,10 +212,10 @@ end
 
         net = RecurrentNetwork(genome, config)
 
-        out1 = activate!(net, [1.0])
-        out2 = activate!(net, [1.0])
-        out3 = activate!(net, [1.0])
-        out4 = activate!(net, [1.0])
+        out1 = copy(activate!(net, [1.0]))
+        out2 = copy(activate!(net, [1.0]))
+        out3 = copy(activate!(net, [1.0]))
+        out4 = copy(activate!(net, [1.0]))
 
         println("  Cycle A→B→A: t1=$(out1[1]), t2=$(out2[1]), t3=$(out3[1]), t4=$(out4[1])")
         @test out1[1] ≈ 0.0 atol=1e-10
@@ -266,8 +266,8 @@ end
         ff_net = FeedForwardNetwork(genome, config)
         rnn_net = RecurrentNetwork(genome, config)
 
-        ff_out = activate!(ff_net, [1.0, 2.0])
-        rnn_out1 = activate!(rnn_net, [1.0, 2.0])  # hidden=computed, output reads prev hidden=0
+        ff_out = copy(activate!(ff_net, [1.0, 2.0]))
+        rnn_out1 = copy(activate!(rnn_net, [1.0, 2.0]))  # hidden=computed, output reads prev hidden=0
         rnn_out2 = activate!(rnn_net, [1.0, 2.0])  # output reads prev hidden (now correct)
 
         println("  Multi-layer: FF=$(ff_out[1]), RNN step1=$(rnn_out1[1]), RNN step2=$(rnn_out2[1])")

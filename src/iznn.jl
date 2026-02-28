@@ -121,11 +121,12 @@ end
 """
 Izhikevich spiking neural network.
 """
-mutable struct IZNNNetwork
+mutable struct IZNNNetwork <: AbstractNetwork
     neurons::Dict{Int, IZNeuron}
     input_nodes::Vector{Int}
     output_nodes::Vector{Int}
     input_values::Dict{Int, Float64}
+    _output::Vector{Float64}   # pre-allocated output buffer (returned by advance!)
 end
 
 """
@@ -174,7 +175,9 @@ function IZNNNetwork(genome::Genome, config::GenomeConfig)
         input_values[key] = 0.0
     end
 
-    IZNNNetwork(neurons, config.input_keys, config.output_keys, input_values)
+    _output = Vector{Float64}(undef, length(config.output_keys))
+
+    IZNNNetwork(neurons, config.input_keys, config.output_keys, input_values, _output)
 end
 
 """
@@ -223,8 +226,11 @@ function advance!(net::IZNNNetwork, dt_msec::Float64)
         advance!(neuron, dt_msec)
     end
 
-    # Return output spike values
-    return [net.neurons[i].fired for i in net.output_nodes]
+    # Fill pre-allocated output buffer
+    for (j, i) in enumerate(net.output_nodes)
+        net._output[j] = net.neurons[i].fired
+    end
+    return net._output
 end
 
 """
@@ -243,3 +249,6 @@ function reset!(net::IZNNNetwork)
         net.input_values[key] = 0.0
     end
 end
+
+"""Convenience constructor accepting `Config` instead of `GenomeConfig`."""
+IZNNNetwork(genome::Genome, config::Config) = IZNNNetwork(genome, config.genome_config)

@@ -211,7 +211,7 @@ function export_network_json(genome::Genome, config::GenomeConfig, filename::Str
         JSON.print(io, network_data, 4)
     end
 
-    println("Network exported to $filename (format v$FORMAT_VERSION)")
+    @info "Network exported" filename format_version=FORMAT_VERSION
 end
 
 """
@@ -335,7 +335,7 @@ function import_network_json_v1(network_data::Dict, config::GenomeConfig)
         genome.connections[conn_key] = conn
     end
 
-    println("Network imported from neat-python v1.0 format")
+    @info "Network imported from neat-python v1.0 format"
     return genome
 end
 
@@ -381,7 +381,7 @@ function import_network_json_legacy(network_data::Dict, config::GenomeConfig)
         genome.connections[conn_key] = conn
     end
 
-    println("Network imported from legacy NEAT.jl format")
+    @info "Network imported from legacy NEAT.jl format"
     return genome
 end
 
@@ -527,5 +527,5 @@ function export_population_json(population::Dict{Int, Genome},
         JSON.print(io, output_data, 4)
     end
 
-    println("Exported $(length(genomes_data)) genomes to $filename (format v$FORMAT_VERSION)")
+    @info "Population exported" num_genomes=length(genomes_data) filename format_version=FORMAT_VERSION
 end

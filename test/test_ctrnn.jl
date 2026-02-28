@@ -257,11 +257,11 @@ end
         net = CTRNNNetwork(genome, config)
 
         # Run several steps, verify output changes over time
-        out_prev = advance!(net, [1.0], 0.01, 0.001)
+        out_prev = copy(advance!(net, [1.0], 0.01, 0.001))
         for _ in 1:5
             out_curr = advance!(net, [1.0], 0.01, 0.001)
             @test out_curr[1] != out_prev[1]  # State should evolve
-            out_prev = out_curr
+            out_prev = copy(out_curr)
         end
         println("  Multi-node recurrent: output evolves over time, final=$(out_prev[1])")
     end

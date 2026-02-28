@@ -661,5 +661,5 @@ Generations 50+:
 - [Getting Started Guide](getting_started.md) - Basic usage
 - [Configuration Reference](config_file.md) - All parameters explained
 - [API Reference](api_reference.md) - Programming interface
-- [Migration Guide](migration.md) - v1.0.0 changes (innovation numbers, etc.)
+- [Migration Guide](migration.md) - v0.1.0 changes (innovation numbers, etc.)
 - [Original NEAT Paper](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf) - Full algorithm specification

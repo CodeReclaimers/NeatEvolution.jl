@@ -1,10 +1,10 @@
-# Migration Guide: v0.1.0 to v1.0.0
+# Migration Guide: v0.0.x to v0.1.0
 
-This guide helps you migrate from NEAT.jl v0.1.0 to v1.0.0. Version 1.0.0 introduces breaking changes to align the implementation with the original NEAT paper by Stanley & Miikkulainen (2002).
+This guide helps you migrate from NEAT.jl v0.0.x to v0.1.0. Version 0.1.0 introduces breaking changes to align the implementation with the original NEAT paper by Stanley & Miikkulainen (2002).
 
 ## Summary of Changes
 
-Version 1.0.0 fixes three critical discrepancies between the implementation and the NEAT paper:
+Version 0.1.0 fixes three critical discrepancies between the implementation and the NEAT paper:
 
 1. ✅ **Innovation numbers implemented** - Connection genes now track historical origins
 2. ✅ **Crossover disable rule fixed** - 75% probability when either parent disabled (was 50%)
@@ -22,10 +22,10 @@ Version 1.0.0 fixes three critical discrepancies between the implementation and 
 If you were manually creating ConnectionGene objects in your code:
 
 ```julia
-# v0.1.0 (OLD)
+# v0.0.x (OLD)
 conn = ConnectionGene((1, 2), 0.5, true)
 
-# v1.0.0 (NEW)
+# v0.1.0 (NEW)
 conn = ConnectionGene((1, 2), 0.5, true, 0)  # Add innovation number
 ```
 
@@ -54,11 +54,11 @@ Update your config.toml files:
 
 ```toml
 [DefaultGenome]
-# OLD (v0.1.0)
+# OLD (v0.0.x)
 compatibility_disjoint_coefficient = 1.0
 compatibility_weight_coefficient = 0.5
 
-# NEW (v1.0.0)
+# NEW (v0.1.0)
 compatibility_excess_coefficient = 1.0     # NEW - coefficient for excess genes
 compatibility_disjoint_coefficient = 1.0   # coefficient for disjoint genes
 compatibility_weight_coefficient = 0.4     # CHANGED - paper specifies 0.4
@@ -125,7 +125,7 @@ Where:
 
 3. **If you serialize/deserialize genomes:**
    - Update your serialization code to handle the `innovation` field
-   - Existing saved genomes from v0.1.0 will need migration
+   - Existing saved genomes from v0.0.x will need migration
 
 ### For Tests
 
@@ -156,16 +156,16 @@ The corrected crossover disable rule (75% vs 50%) means:
 
 ## Backward Compatibility
 
-**Version 1.0.0 is NOT backward compatible with v0.1.0.**
+**Version 0.1.0 is NOT backward compatible with v0.0.x.**
 
 Reasons:
 - ConnectionGene struct has additional field
 - GenomeConfig has additional fields
 - Distance calculation algorithm changed
 
-**Saved Genomes:** Genomes saved from v0.1.0 cannot be directly loaded in v1.0.0 due to struct changes.
+**Saved Genomes:** Genomes saved from v0.0.x cannot be directly loaded in v0.1.0 due to struct changes.
 
-**Migration Path:** Re-run your evolution from scratch with v1.0.0 using updated config files.
+**Migration Path:** Re-run your evolution from scratch with v0.1.0 using updated config files.
 
 ## Benefits of Upgrading
 
@@ -176,7 +176,7 @@ Reasons:
 
 ## Example: Complete Migration
 
-### Before (v0.1.0)
+### Before (v0.0.x)
 
 ```julia
 using NEAT
@@ -193,7 +193,7 @@ pop = Population(config)
 winner = run!(pop, eval_genomes, 100)
 ```
 
-### After (v1.0.0)
+### After (v0.1.0)
 
 ```julia
 using NEAT
@@ -223,7 +223,7 @@ After migrating, run your tests/experiments to verify:
 
 1. ✅ Code compiles without errors
 2. ✅ Evolution runs successfully
-3. ✅ Results are reasonable (may differ from v0.1.0 due to algorithmic corrections)
+3. ✅ Results are reasonable (may differ from v0.0.x due to algorithmic corrections)
 
 ## Need Help?
 
@@ -235,7 +235,7 @@ After migrating, run your tests/experiments to verify:
 
 To verify your implementation is now paper-compliant, see `docs/VERIFICATION_REPORT.md`.
 
-All three critical discrepancies have been resolved in v1.0.0:
+All three critical discrepancies have been resolved in v0.1.0:
 - ✅ Innovation numbers: IMPLEMENTED
 - ✅ Crossover disable rule: FIXED (75%)
 - ✅ Compatibility distance: FIXED (Equation 1)

@@ -17,12 +17,13 @@ const NodeEval = Tuple{Int, ActivationFn, AggregationFn, Float64, Float64, Vecto
 """
 FeedForwardNetwork evaluates a genome as a neural network.
 """
-struct FeedForwardNetwork
+struct FeedForwardNetwork <: AbstractNetwork
     input_nodes::Vector{Int}
     output_nodes::Vector{Int}
     node_evals::Vector{NodeEval}
     values::Dict{Int, Float64}
-    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
+    _buffer::Vector{Float64}   # pre-allocated workspace for aggregation
+    _output::Vector{Float64}   # pre-allocated output buffer (returned by activate!)
 end
 
 """
@@ -80,11 +81,16 @@ function FeedForwardNetwork(genome::Genome, config::GenomeConfig)
     max_links = isempty(node_evals) ? 0 : maximum(length(last(ne)) for ne in node_evals)
     _buffer = Vector{Float64}(undef, max_links)
 
-    FeedForwardNetwork(config.input_keys, config.output_keys, node_evals, values, _buffer)
+    _output = Vector{Float64}(undef, length(config.output_keys))
+
+    FeedForwardNetwork(config.input_keys, config.output_keys, node_evals, values, _buffer, _output)
 end
 
 """
 Activate the network with given inputs and return outputs.
+
+Returns a reference to an internal buffer. Callers who need to store results
+across multiple `activate!` calls should copy the returned vector.
 """
 function activate!(network::FeedForwardNetwork, inputs::Vector{Float64})
     if length(network.input_nodes) != length(inputs)
@@ -108,6 +114,12 @@ function activate!(network::FeedForwardNetwork, inputs::Vector{Float64})
         network.values[node] = act_func(bias + response * s)
     end
 
-    # Return output values
-    return [network.values[i] for i in network.output_nodes]
+    # Fill pre-allocated output buffer
+    for (j, i) in enumerate(network.output_nodes)
+        network._output[j] = network.values[i]
+    end
+    return network._output
 end
+
+"""Convenience constructor accepting `Config` instead of `GenomeConfig`."""
+FeedForwardNetwork(genome::Genome, config::Config) = FeedForwardNetwork(genome, config.genome_config)

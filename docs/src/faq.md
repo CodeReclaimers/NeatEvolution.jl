@@ -29,7 +29,7 @@ This document answers common questions about using NEAT.jl for neuroevolution.
 
 ### Is NEAT.jl ready for production use?
 
-**Yes**, NEAT.jl v1.0.0 is a complete, tested implementation suitable for:
+**Yes**, NEAT.jl v0.1.0 is a complete, tested implementation suitable for:
 
 - ✅ Research and experimentation
 - ✅ Game AI and control tasks
