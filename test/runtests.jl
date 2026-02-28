@@ -2141,7 +2141,9 @@ include("test_checkpointer.jl")
             imported_conn = imported_genome.connections[conn_key]
             @test imported_conn.weight == 1.5
             @test imported_conn.enabled == true
-            @test imported_conn.innovation == 1
+            # Innovation numbers are not in neat-python v1.0 format;
+            # import defaults to 0 when absent
+            @test imported_conn.innovation == 0
 
             # Test round-trip with network
             net1 = FeedForwardNetwork(genome, config.genome_config)
@@ -2187,9 +2189,10 @@ include("test_checkpointer.jl")
             @test length(data["genomes"]) == 3
 
             # Check they're sorted by fitness (descending)
-            @test data["genomes"][1]["fitness"] == 5.0
-            @test data["genomes"][2]["fitness"] == 4.0
-            @test data["genomes"][3]["fitness"] == 3.0
+            # Fitness is stored in the metadata sub-dict per v1.0 format
+            @test data["genomes"][1]["metadata"]["fitness"] == 5.0
+            @test data["genomes"][2]["metadata"]["fitness"] == 4.0
+            @test data["genomes"][3]["metadata"]["fitness"] == 3.0
 
         finally
             if isfile(temp_pop_file)
