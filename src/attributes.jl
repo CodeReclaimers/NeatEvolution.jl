@@ -83,7 +83,7 @@ BoolAttribute handles boolean attributes like whether a connection is enabled.
 """
 struct BoolAttribute <: BaseAttribute
     name::Symbol
-    default::Symbol  # :true, :false, or :random
+    default::Symbol  # Symbol("true"), Symbol("false"), or Symbol("random")
     mutate_rate::Float64
     rate_to_true_add::Float64
     rate_to_false_add::Float64
@@ -101,12 +101,14 @@ function BoolAttribute(name::Symbol, config::Dict)
     # Convert to string and parse to Symbol
     default_str = lowercase(string(default_val))
 
+    # Note: :true and :false are Bool literals in Julia, not Symbols.
+    # We must use Symbol("true") etc. to get actual Symbol values.
     if default_str == "true" || default_str == "1" || default_str == "on" || default_str == "yes"
-        default_sym = :true
+        default_sym = Symbol("true")
     elseif default_str == "false" || default_str == "0" || default_str == "off" || default_str == "no"
-        default_sym = :false
+        default_sym = Symbol("false")
     elseif default_str == "random" || default_str == "none"
-        default_sym = :random
+        default_sym = Symbol("random")
     else
         error("Unknown default value '$default_str' for attribute $name")
     end
@@ -114,7 +116,7 @@ function BoolAttribute(name::Symbol, config::Dict)
     # Construct and return
     return BoolAttribute(
         name,
-        Symbol(string(default_sym)),  # Force Symbol type
+        default_sym,
         Float64(get(config, Symbol(prefix * "_mutate_rate"), 0.0)),
         Float64(get(config, Symbol(prefix * "_rate_to_true_add"), 0.0)),
         Float64(get(config, Symbol(prefix * "_rate_to_false_add"), 0.0))
@@ -122,11 +124,11 @@ function BoolAttribute(name::Symbol, config::Dict)
 end
 
 function init_value(attr::BoolAttribute, rng::AbstractRNG=Random.GLOBAL_RNG)
-    if attr.default == :true
+    if attr.default == Symbol("true")
         return true
-    elseif attr.default == :false
+    elseif attr.default == Symbol("false")
         return false
-    else  # :random
+    else  # Symbol("random")
         return rand(rng, Bool)
     end
 end

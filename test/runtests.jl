@@ -1331,6 +1331,8 @@ include("test_speciation.jl")
                 :feed_forward => true,
                 :conn_add_prob => 0.9,
                 :node_add_prob => 0.0,
+                :node_delete_prob => 0.0,
+                :conn_delete_prob => 0.0,
                 :activation_default => "sigmoid",
                 :aggregation_default => "sum",
                 :activation_options => ["sigmoid"],
