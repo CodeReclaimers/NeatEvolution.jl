@@ -264,7 +264,7 @@ draw_net(winner, config.genome_config,
          node_names=Dict(-1=>"x1", -2=>"x2", 0=>"out"))
 ```
 
-See [Visualization Guide](VISUALIZATION_PLAN.md) for advanced visualization features.
+See [Visualization Guide](visualization_guide.md) for advanced visualization features.
 
 ## Next Steps
 

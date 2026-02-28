@@ -10,6 +10,8 @@ include("test_iznn.jl")
 include("test_population_seeding.jl")
 include("test_recurrent.jl")
 include("test_checkpointer.jl")
+include("test_stagnation.jl")
+include("test_speciation.jl")
 
 @testset "NEAT.jl" begin
     @testset "Config Loading" begin
@@ -352,10 +354,10 @@ include("test_checkpointer.jl")
             # Network with no inputs and one output neuron
             input_nodes = Int[]
             output_nodes = [0]
-            node_evals = [(0, sigmoid_activation, sum_aggregation, 0.0, 1.0, Tuple{Int, Float64}[])]
+            node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, Tuple{Int, Float64}[])]
             values = Dict{Int, Float64}(0 => 0.0)
 
-            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values)
+            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Float64[])
 
             @test net.values[0] == 0.0
 
@@ -372,10 +374,10 @@ include("test_checkpointer.jl")
             # Simple network with one connection of weight 1.0 to sigmoid output
             input_nodes = [-1]
             output_nodes = [0]
-            node_evals = [(0, sigmoid_activation, sum_aggregation, 0.0, 1.0, [(-1, 1.0)])]
+            node_evals = [(0, NEAT.ActivationFn(sigmoid_activation), NEAT.AggregationFn(sum_aggregation), 0.0, 1.0, [(-1, 1.0)])]
             values = Dict{Int, Float64}(-1 => 0.0, 0 => 0.0)
 
-            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values)
+            net = FeedForwardNetwork(input_nodes, output_nodes, node_evals, values, Vector{Float64}(undef, 1))
 
             @test net.values[0] == 0.0
 

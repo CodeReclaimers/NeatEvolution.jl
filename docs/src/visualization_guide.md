@@ -100,7 +100,7 @@ plot_fitness(stats, filename="fitness.png")
 - **Blue line**: Average fitness per generation
 - **Green dashed lines**: ±1 standard deviation bands
 
-![Example fitness plot](../examples/xor/fitness.png)
+*Generate with `plot_fitness(stats, filename="fitness.png")` (requires Plots.jl)*
 
 ### Customizing Fitness Plots
 

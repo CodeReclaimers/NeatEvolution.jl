@@ -3,10 +3,16 @@ Feed-forward neural network evaluation for NEAT genomes.
 """
 
 """
+Type-stable function wrappers for activation and aggregation functions.
+"""
+const ActivationFn = FunctionWrapper{Float64, Tuple{Float64}}
+const AggregationFn = FunctionWrapper{Float64, Tuple{Vector{Float64}}}
+
+"""
 Node evaluation tuple: (node_id, activation_func, aggregation_func, bias, response, inputs)
 where inputs is a vector of (input_node_id, weight) tuples.
 """
-const NodeEval = Tuple{Int, Function, Function, Float64, Float64, Vector{Tuple{Int, Float64}}}
+const NodeEval = Tuple{Int, ActivationFn, AggregationFn, Float64, Float64, Vector{Tuple{Int, Float64}}}
 
 """
 FeedForwardNetwork evaluates a genome as a neural network.
@@ -16,6 +22,7 @@ struct FeedForwardNetwork
     output_nodes::Vector{Int}
     node_evals::Vector{NodeEval}
     values::Dict{Int, Float64}
+    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
 end
 
 """
@@ -45,11 +52,11 @@ function FeedForwardNetwork(genome::Genome, config::GenomeConfig)
             # Get node gene
             ng = genome.nodes[node]
 
-            # Get activation and aggregation functions
-            activation_func = get_activation_function(ng.activation)
-            aggregation_func = get_aggregation_function(ng.aggregation)
+            # Wrap activation and aggregation functions for type stability
+            act_func = ActivationFn(get_activation_function(ng.activation))
+            agg_func = AggregationFn(get_aggregation_function(ng.aggregation))
 
-            push!(node_evals, (node, activation_func, aggregation_func, ng.bias, ng.response, inputs))
+            push!(node_evals, (node, act_func, agg_func, ng.bias, ng.response, inputs))
         end
     end
 
@@ -69,7 +76,11 @@ function FeedForwardNetwork(genome::Genome, config::GenomeConfig)
         end
     end
 
-    FeedForwardNetwork(config.input_keys, config.output_keys, node_evals, values)
+    # Pre-allocate buffer for aggregation inputs
+    max_links = isempty(node_evals) ? 0 : maximum(length(last(ne)) for ne in node_evals)
+    _buffer = Vector{Float64}(undef, max_links)
+
+    FeedForwardNetwork(config.input_keys, config.output_keys, node_evals, values, _buffer)
 end
 
 """
@@ -87,12 +98,13 @@ function activate!(network::FeedForwardNetwork, inputs::Vector{Float64})
 
     # Evaluate each node in order
     for (node, act_func, agg_func, bias, response, links) in network.node_evals
-        node_inputs = Float64[]
-        for (i, w) in links
-            push!(node_inputs, network.values[i] * w)
+        n = length(links)
+        resize!(network._buffer, n)
+        for (j, (i, w)) in enumerate(links)
+            network._buffer[j] = network.values[i] * w
         end
 
-        s = agg_func(node_inputs)
+        s = agg_func(network._buffer)
         network.values[node] = act_func(bias + response * s)
     end
 

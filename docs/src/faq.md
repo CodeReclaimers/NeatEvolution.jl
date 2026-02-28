@@ -57,7 +57,7 @@ NEAT.jl is a faithful Julia port of neat-python with these key differences:
 - **Type system**: Leverages Julia's type system for performance
 - **Visualization**: Uses Plots.jl and GraphMakie instead of matplotlib/graphviz
 - **Extensions**: Uses Julia's package extension system for optional dependencies
-- **Network types**: Currently supports feed-forward networks (recurrent networks planned)
+- **Network types**: Supports feed-forward, recurrent (`RecurrentNetwork`), continuous-time recurrent (`CTRNNNetwork`), and Izhikevich spiking (`IZNNNetwork`) networks
 
 ### How do I cite NEAT.jl in academic work?
 

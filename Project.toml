@@ -5,36 +5,34 @@ version = "1.0.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
-GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+FunctionWrappers = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[weakdeps]
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [extensions]
 NEATGraphMakieExt = ["GLMakie", "GraphMakie", "Graphs"]
 NEATVisualizationExt = "Plots"
 
 [compat]
+FunctionWrappers = "1"
 GLMakie = "0.10"
 GraphMakie = "0.5"
 Graphs = "1.9"
 JSON = "0.21"
 Plots = "1.38"
-PyCall = "1.96.4"
 julia = "1.9"
 
 [extras]
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
-GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Plots", "GLMakie", "GraphMakie", "Graphs"]
+test = ["Test"]

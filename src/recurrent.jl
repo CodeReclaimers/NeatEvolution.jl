@@ -22,6 +22,7 @@ mutable struct RecurrentNetwork
     node_evals::Vector{NodeEval}
     values::Dict{Int, Float64}
     prev_values::Dict{Int, Float64}
+    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
 end
 
 """
@@ -56,11 +57,11 @@ function RecurrentNetwork(genome::Genome, config::GenomeConfig)
         # Get node gene
         ng = genome.nodes[node]
 
-        # Get activation and aggregation functions
-        activation_func = get_activation_function(ng.activation)
-        aggregation_func = get_aggregation_function(ng.aggregation)
+        # Wrap activation and aggregation functions for type stability
+        act_func = ActivationFn(get_activation_function(ng.activation))
+        agg_func = AggregationFn(get_aggregation_function(ng.aggregation))
 
-        push!(node_evals, (node, activation_func, aggregation_func, ng.bias, ng.response, inputs))
+        push!(node_evals, (node, act_func, agg_func, ng.bias, ng.response, inputs))
     end
 
     # Initialize value dictionaries with zeros
@@ -82,7 +83,11 @@ function RecurrentNetwork(genome::Genome, config::GenomeConfig)
         end
     end
 
-    RecurrentNetwork(config.input_keys, config.output_keys, node_evals, values, prev_values)
+    # Pre-allocate buffer for aggregation inputs
+    max_links = isempty(node_evals) ? 0 : maximum(length(last(ne)) for ne in node_evals)
+    _buffer = Vector{Float64}(undef, max_links)
+
+    RecurrentNetwork(config.input_keys, config.output_keys, node_evals, values, prev_values, _buffer)
 end
 
 """
@@ -105,12 +110,13 @@ function activate!(network::RecurrentNetwork, inputs::Vector{Float64})
 
     # Evaluate each node, reading from prev_values
     for (node, act_func, agg_func, bias, response, links) in network.node_evals
-        node_inputs = Float64[]
-        for (i, w) in links
-            push!(node_inputs, network.prev_values[i] * w)
+        n = length(links)
+        resize!(network._buffer, n)
+        for (j, (i, w)) in enumerate(links)
+            network._buffer[j] = network.prev_values[i] * w
         end
 
-        s = agg_func(node_inputs)
+        s = agg_func(network._buffer)
         network.values[node] = act_func(bias + response * s)
     end
 

@@ -1,0 +1,116 @@
+# Izhikevich Spiking Network Example Configuration
+# Task: Evolve a spiking network that matches a target spike pattern
+# Demonstrates biologically-inspired spiking neuron dynamics
+
+[NEAT]
+pop_size = 150
+fitness_criterion = "max"
+fitness_threshold = 0.95
+reset_on_extinction = true
+no_fitness_termination = false
+
+[DefaultGenome]
+num_inputs = 1
+num_outputs = 1
+num_hidden = 0
+feed_forward = false
+initial_connection = "full"
+
+compatibility_excess_coefficient = 1.0
+compatibility_disjoint_coefficient = 1.0
+compatibility_weight_coefficient = 0.4
+
+conn_add_prob = 0.3
+conn_delete_prob = 0.1
+node_add_prob = 0.1
+node_delete_prob = 0.05
+single_structural_mutation = false
+
+activation_default = "sigmoid"
+activation_mutate_rate = 0.0
+activation_options = ["sigmoid"]
+
+aggregation_default = "sum"
+aggregation_mutate_rate = 0.0
+aggregation_options = ["sum"]
+
+bias_init_mean = 5.0
+bias_init_stdev = 2.0
+bias_init_type = "gaussian"
+bias_max_value = 30.0
+bias_min_value = -10.0
+bias_mutate_power = 1.0
+bias_mutate_rate = 0.7
+bias_replace_rate = 0.1
+
+response_init_mean = 1.0
+response_init_stdev = 0.0
+response_init_type = "gaussian"
+response_max_value = 30.0
+response_min_value = -30.0
+response_mutate_power = 0.0
+response_mutate_rate = 0.0
+response_replace_rate = 0.0
+
+weight_init_mean = 5.0
+weight_init_stdev = 3.0
+weight_init_type = "gaussian"
+weight_max_value = 30.0
+weight_min_value = -30.0
+weight_mutate_power = 1.0
+weight_mutate_rate = 0.8
+weight_replace_rate = 0.1
+
+enabled_default = "true"
+enabled_mutate_rate = 0.01
+
+# Izhikevich neuron parameters
+# Default to regular spiking: a=0.02, b=0.2, c=-65, d=8
+iz_a_init_mean = 0.02
+iz_a_init_stdev = 0.01
+iz_a_init_type = "gaussian"
+iz_a_max_value = 0.2
+iz_a_min_value = 0.01
+iz_a_mutate_power = 0.005
+iz_a_mutate_rate = 0.3
+iz_a_replace_rate = 0.05
+
+iz_b_init_mean = 0.2
+iz_b_init_stdev = 0.05
+iz_b_init_type = "gaussian"
+iz_b_max_value = 0.3
+iz_b_min_value = 0.1
+iz_b_mutate_power = 0.02
+iz_b_mutate_rate = 0.3
+iz_b_replace_rate = 0.05
+
+iz_c_init_mean = -65.0
+iz_c_init_stdev = 5.0
+iz_c_init_type = "gaussian"
+iz_c_max_value = -50.0
+iz_c_min_value = -80.0
+iz_c_mutate_power = 2.0
+iz_c_mutate_rate = 0.3
+iz_c_replace_rate = 0.05
+
+iz_d_init_mean = 8.0
+iz_d_init_stdev = 2.0
+iz_d_init_type = "gaussian"
+iz_d_max_value = 15.0
+iz_d_min_value = 0.05
+iz_d_mutate_power = 1.0
+iz_d_mutate_rate = 0.3
+iz_d_replace_rate = 0.05
+
+[DefaultSpeciesSet]
+compatibility_threshold = 3.0
+
+[DefaultStagnation]
+species_fitness_func = "max"
+max_stagnation = 30
+species_elitism = 2
+
+[DefaultReproduction]
+elitism = 2
+survival_threshold = 0.2
+min_species_size = 2

@@ -65,6 +65,11 @@ mutable struct NodeGene
     response::Float64
     activation::Symbol
     aggregation::Symbol
+    time_constant::Float64   # CTRNN tau (NaN = not configured)
+    iz_a::Float64            # Izhikevich recovery time scale (NaN = not configured)
+    iz_b::Float64            # Izhikevich recovery sensitivity
+    iz_c::Float64            # Izhikevich after-spike reset potential (mV)
+    iz_d::Float64            # Izhikevich after-spike recovery increment
 end
 ```
 
@@ -75,6 +80,8 @@ Represents a neuron with its properties.
 - `response`: Response multiplier
 - `activation`: Activation function (e.g., `:sigmoid`)
 - `aggregation`: Aggregation function (e.g., `:sum`)
+- `time_constant`: Time constant τ for CTRNN dynamics (`NaN` when not using CTRNNNetwork)
+- `iz_a`, `iz_b`, `iz_c`, `iz_d`: Izhikevich neuron model parameters (`NaN` when not using IZNNNetwork)
 
 ---
 
@@ -313,6 +320,112 @@ net = FeedForwardNetwork(winner, config.genome_config)
 
 ---
 
+### RecurrentNetwork
+
+```julia
+RecurrentNetwork(genome::Genome, config::GenomeConfig)
+```
+
+Create a recurrent neural network from a genome. Unlike `FeedForwardNetwork`, this handles cycles (including self-connections) by maintaining internal state across calls to `activate!`.
+
+**Fields:**
+- `input_nodes::Vector{Int}`: Input node IDs
+- `output_nodes::Vector{Int}`: Output node IDs
+- `values::Dict{Int, Float64}`: Current timestep node values
+- `prev_values::Dict{Int, Float64}`: Previous timestep node values
+
+**Functions:**
+- `activate!(net, inputs)` — Feed inputs and compute one timestep, returns output values
+- `reset!(net)` — Zero out internal state
+
+**Example:**
+```julia
+net = RecurrentNetwork(genome, config.genome_config)
+for input in sequence
+    output = activate!(net, input)
+end
+reset!(net)  # clear state for next sequence
+```
+
+---
+
+### CTRNNNetwork
+
+```julia
+CTRNNNetwork(genome::Genome, config::GenomeConfig)
+```
+
+Create a Continuous-Time Recurrent Neural Network. Models continuous temporal dynamics using forward Euler integration with per-node time constants.
+
+Requires `time_constant` parameters in the genome config (not `NaN`).
+
+**Fields:**
+- `input_nodes::Vector{Int}`: Input node IDs
+- `output_nodes::Vector{Int}`: Output node IDs
+- `node_evals::Dict{Int, CTRNNNodeEval}`: Per-node evaluation data
+- `values::Vector{Dict{Int, Float64}}`: Double-buffered state `[buffer1, buffer2]`
+- `active::Int`: Index of current read buffer (1 or 2)
+- `time_seconds::Float64`: Accumulated simulation time
+
+**`CTRNNNodeEval` fields:**
+- `node_id`, `time_constant`, `activation`, `aggregation`, `bias`, `response`, `links`
+
+**Functions:**
+- `advance!(net, inputs, advance_time, time_step)` — Integrate forward by `advance_time` seconds with step `time_step`, returns output values
+- `reset!(net)` — Zero both buffers and reset time to 0
+- `set_node_value!(net, node_key, value)` — Inject state into both buffers
+
+**Example:**
+```julia
+net = CTRNNNetwork(genome, config.genome_config)
+output = advance!(net, [1.0], 0.1, 0.01)  # 100ms with 10ms steps
+```
+
+---
+
+### IZNNNetwork
+
+```julia
+IZNNNetwork(genome::Genome, config::GenomeConfig)
+```
+
+Create an Izhikevich spiking neural network. Uses biologically realistic spiking dynamics with 4 parameters (a, b, c, d) per neuron. Communication is spike-based (binary 0/1).
+
+Requires `iz_a`, `iz_b`, `iz_c`, `iz_d` parameters in the genome config (not `NaN`).
+
+**Fields:**
+- `neurons::Dict{Int, IZNeuron}`: Neuron state and parameters
+- `input_nodes::Vector{Int}`: Input node IDs
+- `output_nodes::Vector{Int}`: Output node IDs
+- `input_values::Dict{Int, Float64}`: External input currents
+
+**`IZNeuron` fields:**
+- `a`, `b`, `c`, `d`: Izhikevich model parameters
+- `bias`: Baseline current
+- `inputs`: Vector of `(source_node_id, weight)` tuples
+- `v`: Membrane potential (mV)
+- `u`: Recovery variable
+- `fired`: 0.0 or 1.0 (spike output)
+- `current`: Total input current
+
+**Named presets:**
+- `IZ_REGULAR_SPIKING`, `IZ_INTRINSIC_BURST`, `IZ_CHATTERING`
+- `IZ_FAST_SPIKING`, `IZ_THALAMO_CORTICAL`, `IZ_RESONATOR`, `IZ_LOW_THRESHOLD`
+
+**Functions:**
+- `set_inputs!(net, inputs)` — Set external input values
+- `advance!(net, dt_msec)` — Advance all neurons by `dt_msec` milliseconds, returns output spike values
+- `reset!(net)` — Reset all neurons to initial state
+
+**Example:**
+```julia
+net = IZNNNetwork(genome, config.genome_config)
+set_inputs!(net, [10.0])  # inject current
+spikes = advance!(net, 1.0)  # advance 1ms
+```
+
+---
+
 ## Reporters
 
 ### StdOutReporter
@@ -367,6 +480,48 @@ Add a reporter to the population.
 ```julia
 add_reporter!(pop, StdOutReporter(true))
 add_reporter!(pop, StatisticsReporter())
+```
+
+---
+
+### Checkpointer
+
+```julia
+Checkpointer(; generation_interval=nothing, time_interval_seconds=nothing, filename_prefix="neat-checkpoint")
+```
+
+Reporter that saves evolution state at configurable intervals. At least one of `generation_interval` or `time_interval_seconds` must be provided.
+
+**Example:**
+```julia
+# Save every 10 generations
+add_reporter!(pop, Checkpointer(generation_interval=10))
+
+# Save every 5 minutes
+add_reporter!(pop, Checkpointer(time_interval_seconds=300.0))
+```
+
+### save_checkpoint
+
+```julia
+save_checkpoint(filename::String, pop::Population)
+```
+
+Manually save a checkpoint of the current population state.
+
+### restore_checkpoint
+
+```julia
+restore_checkpoint(filename::String) -> Population
+```
+
+Restore a `Population` from a checkpoint file. The restored population can continue evolution with `run!`. Internal counters are automatically adjusted to prevent ID conflicts.
+
+**Example:**
+```julia
+pop = restore_checkpoint("neat-checkpoint-50")
+add_reporter!(pop, StdOutReporter())
+winner = run!(pop, eval_genomes, 50)  # run 50 more generations
 ```
 
 ---
@@ -793,4 +948,4 @@ save_statistics(stats, prefix="run1")
 - [Configuration Reference](config_file.md)
 - [XOR Example](xor_example.md)
 - [Activation Functions](activation_functions.md)
-- [Visualization Guide](VISUALIZATION_PLAN.md)
+- [Visualization Guide](visualization_guide.md)

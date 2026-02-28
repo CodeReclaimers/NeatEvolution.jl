@@ -24,8 +24,8 @@ Evaluation data for a single CTRNN node.
 struct CTRNNNodeEval
     node_id::Int
     time_constant::Float64
-    activation::Function
-    aggregation::Function
+    activation::ActivationFn
+    aggregation::AggregationFn
     bias::Float64
     response::Float64
     links::Vector{Tuple{Int, Float64}}
@@ -44,6 +44,7 @@ mutable struct CTRNNNetwork
     values::Vector{Dict{Int, Float64}}   # [buffer1, buffer2]
     active::Int                          # 1 or 2 (current read buffer)
     time_seconds::Float64
+    _buffer::Vector{Float64}  # pre-allocated workspace for aggregation
 end
 
 """
@@ -63,6 +64,7 @@ function CTRNNNetwork(genome::Genome, config::GenomeConfig)
     node_evals = Dict{Int, CTRNNNodeEval}()
     eval_nodes = sort(collect(setdiff(required, Set(config.input_keys))))
 
+    max_links = 0
     for node_id in eval_nodes
         ng = genome.nodes[node_id]
 
@@ -83,14 +85,17 @@ function CTRNNNetwork(genome::Genome, config::GenomeConfig)
             end
         end
 
-        activation_func = get_activation_function(ng.activation)
-        aggregation_func = get_aggregation_function(ng.aggregation)
+        # Wrap activation and aggregation functions for type stability
+        act_func = ActivationFn(get_activation_function(ng.activation))
+        agg_func = AggregationFn(get_aggregation_function(ng.aggregation))
 
         node_evals[node_id] = CTRNNNodeEval(
             node_id, ng.time_constant,
-            activation_func, aggregation_func,
+            act_func, agg_func,
             ng.bias, ng.response, links
         )
+
+        max_links = max(max_links, length(links))
     end
 
     # Initialize double buffers with zeros for all relevant nodes
@@ -105,8 +110,11 @@ function CTRNNNetwork(genome::Genome, config::GenomeConfig)
         buf2[node_id] = 0.0
     end
 
+    # Pre-allocate buffer for aggregation inputs
+    _buffer = Vector{Float64}(undef, max_links)
+
     CTRNNNetwork(config.input_keys, config.output_keys, node_evals,
-                 [buf1, buf2], 1, 0.0)
+                 [buf1, buf2], 1, 0.0, _buffer)
 end
 
 """
@@ -141,12 +149,13 @@ function advance!(net::CTRNNNetwork, inputs::Vector{Float64},
         # Update each node using forward Euler
         for (node_id, ne) in net.node_evals
             # Aggregate weighted inputs from read buffer
-            node_inputs = Float64[]
-            for (i, w) in ne.links
-                push!(node_inputs, ivalues[i] * w)
+            n = length(ne.links)
+            resize!(net._buffer, n)
+            for (j, (i, w)) in enumerate(ne.links)
+                net._buffer[j] = ivalues[i] * w
             end
 
-            s = ne.aggregation(node_inputs)
+            s = ne.aggregation(net._buffer)
             z = ne.activation(ne.bias + ne.response * s)
 
             # Forward Euler: y += (dt/tau) * (-y + z)

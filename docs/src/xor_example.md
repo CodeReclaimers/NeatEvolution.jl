@@ -230,7 +230,7 @@ Input 2 ──┴─────────────┘
 
 ### Fitness Evolution
 
-![Fitness Plot](../examples/xor/xor_fitness.png)
+*Generate with `plot_fitness(stats, filename="xor_fitness.png")` (requires Plots.jl)*
 
 Shows:
 - **Red line**: Best fitness per generation
@@ -239,7 +239,7 @@ Shows:
 
 ### Species Evolution
 
-![Species Plot](../examples/xor/xor_species.png)
+*Generate with `plot_species(stats, filename="xor_species.png")` (requires Plots.jl)*
 
 Shows:
 - Colored areas: Different species
@@ -248,7 +248,7 @@ Shows:
 
 ### Network Diagram
 
-![Network Diagram](../examples/xor/xor_winner.png)
+*Generate with `draw_net(winner, config.genome_config, filename="xor_winner.png")` (requires Plots.jl)*
 
 Shows:
 - **Green nodes**: Inputs (x1, x2)
@@ -260,7 +260,7 @@ Shows:
 
 ### Activation Heatmap
 
-![Activation Heatmap](../examples/xor/xor_activation_heatmap.png)
+*Generate with `plot_activation_heatmap(winner, config.genome_config, filename="xor_heatmap.png")` (requires Plots.jl)*
 
 Visualizes the decision boundary:
 - X-axis: Input 1
@@ -404,4 +404,4 @@ Set:
 - [Getting Started Guide](getting_started.md)
 - [Configuration Reference](config_file.md)
 - [Activation Functions](activation_functions.md)
-- [Visualization Guide](VISUALIZATION_PLAN.md)
+- [Visualization Guide](visualization_guide.md)

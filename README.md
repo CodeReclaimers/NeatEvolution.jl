@@ -43,7 +43,7 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - Evolution animations (GIF)
 
 ✅ **Quality Assurance**
-- 294 passing tests
+- Comprehensive test suite
 - Code coverage reporting
 - Continuous integration
 - Comprehensive troubleshooting guide
@@ -226,7 +226,7 @@ using Pkg
 Pkg.test("NEAT")
 ```
 
-All 294 tests should pass!
+All tests should pass!
 
 ## Examples
 

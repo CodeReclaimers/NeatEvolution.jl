@@ -11,6 +11,7 @@ using Statistics
 using TOML
 using JSON
 using Serialization
+using FunctionWrappers: FunctionWrapper
 
 # Include all components
 include("utils.jl")
