@@ -390,7 +390,7 @@ function validate_stagnation_params(params::Dict)
 
     if haskey(params, :species_fitness_func)
         func = Symbol(lowercase(string(params[:species_fitness_func])))
-        valid_funcs = [:max, :min, :mean, :median]
+        valid_funcs = [:max, :min, :mean, :median, :tmean]
         if !(func in valid_funcs)
             error("""Invalid species_fitness_func: '$(params[:species_fitness_func])'
                      Valid options: $(join(valid_funcs, ", "))

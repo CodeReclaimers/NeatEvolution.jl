@@ -27,6 +27,31 @@ function variance_stat(values)
     return var(values)
 end
 
+"""Compute trimmed mean, discarding the lowest and highest `trim` fraction of values."""
+function tmean(values::AbstractVector{<:Real}; trim::Float64=0.1)
+    n = length(values)
+    n == 0 && error("Cannot compute trimmed mean of empty collection")
+    sorted = sort(collect(values))
+    k = floor(Int, n * trim)
+    trimmed = sorted[(k+1):(n-k)]
+    isempty(trimmed) && return mean(sorted)
+    return mean(trimmed)
+end
+
+"""Wrapper for tmean usable as a species fitness stat function."""
+tmean_stat(values) = tmean(collect(values))
+
+"""
+Compute softmax of a vector, converting values to a probability distribution.
+
+Uses the numerically stable formulation: subtract the maximum before exponentiating.
+"""
+function softmax(values::AbstractVector{<:Real})
+    m = maximum(values)
+    e = exp.(values .- m)
+    return e ./ sum(e)
+end
+
 # Stat function lookup table
 const STAT_FUNCTIONS = Dict{Symbol, Function}(
     :min => minimum,
@@ -34,7 +59,8 @@ const STAT_FUNCTIONS = Dict{Symbol, Function}(
     :mean => mean_stat,
     :median => median_stat,
     :stdev => stdev_stat,
-    :variance => variance_stat
+    :variance => variance_stat,
+    :tmean => tmean_stat
 )
 
 function get_stat_function(name::Symbol)

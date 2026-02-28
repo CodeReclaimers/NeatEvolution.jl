@@ -5,6 +5,8 @@ using Random
 # Include test files
 include("test_genes.jl")
 include("test_population_seeding.jl")
+include("test_recurrent.jl")
+include("test_checkpointer.jl")
 
 @testset "NEAT.jl" begin
     @testset "Config Loading" begin
@@ -2394,5 +2396,57 @@ include("test_population_seeding.jl")
                 rm(temp_config6)
             end
         end
+    end
+
+    @testset "Softmax" begin
+        # Outputs sum to 1
+        result = softmax([1.0, 2.0, 3.0])
+        @test sum(result) ≈ 1.0 atol=1e-10
+        println("  softmax([1,2,3]) sums to $(sum(result))")
+
+        # Uniform inputs → uniform distribution
+        result_uniform = softmax([1.0, 1.0, 1.0, 1.0])
+        @test all(x -> x ≈ 0.25, result_uniform)
+        println("  softmax([1,1,1,1]) = $result_uniform")
+
+        # Numerical stability with large values
+        result_large = softmax([1000.0, 1001.0, 1002.0])
+        @test sum(result_large) ≈ 1.0 atol=1e-10
+        @test all(x -> x > 0.0, result_large)
+        println("  softmax([1000,1001,1002]) sums to $(sum(result_large)), all positive")
+
+        # Single element → [1.0]
+        result_single = softmax([42.0])
+        @test result_single ≈ [1.0] atol=1e-10
+        println("  softmax([42]) = $result_single")
+
+        # Monotonicity: larger input → larger probability
+        @test result[3] > result[2] > result[1]
+    end
+
+    @testset "Trimmed Mean (tmean)" begin
+        # Known result: tmean([1,2,3,4,5], trim=0.2) trims 1 from each end → mean([2,3,4]) = 3.0
+        result = tmean([1.0, 2.0, 3.0, 4.0, 5.0], trim=0.2)
+        @test result ≈ 3.0 atol=1e-10
+        println("  tmean([1,2,3,4,5], trim=0.2) = $result")
+
+        # trim=0.0 matches regular mean
+        vals = [1.0, 3.0, 5.0, 7.0, 9.0]
+        @test tmean(vals, trim=0.0) ≈ 5.0 atol=1e-10
+        println("  tmean with trim=0.0 matches mean: $(tmean(vals, trim=0.0))")
+
+        # Single value
+        @test tmean([42.0]) ≈ 42.0 atol=1e-10
+        println("  tmean([42]) = $(tmean([42.0]))")
+
+        # Empty collection throws
+        @test_throws ErrorException tmean(Float64[])
+
+        # Robust to outliers
+        with_outlier = [1.0, 2.0, 3.0, 4.0, 100.0]
+        regular_mean = sum(with_outlier) / length(with_outlier)
+        trimmed = tmean(with_outlier, trim=0.2)
+        @test trimmed < regular_mean
+        println("  Outlier robustness: mean=$(regular_mean), tmean=$trimmed")
     end
 end

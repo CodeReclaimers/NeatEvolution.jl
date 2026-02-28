@@ -10,6 +10,7 @@ using Random
 using Statistics
 using TOML
 using JSON
+using Serialization
 
 # Include all components
 include("utils.jl")
@@ -27,7 +28,9 @@ include("reproduction.jl")
 include("reporting.jl")
 include("statistics.jl")
 include("feedforward.jl")
+include("recurrent.jl")
 include("population.jl")
+include("checkpointer.jl")
 include("export.jl")
 
 # Export main types
@@ -35,11 +38,12 @@ export Config, load_config
 export GenomeConfig, SpeciesConfig, StagnationConfig, ReproductionConfig
 export Genome, NodeGene, ConnectionGene
 export Population, CompleteExtinctionException
-export FeedForwardNetwork
+export FeedForwardNetwork, RecurrentNetwork, reset!
 export Reporter, StdOutReporter, StatisticsReporter
+export Checkpointer, CheckpointData, save_checkpoint, restore_checkpoint
 
 # Export main functions
-export run!, activate!
+export run!, activate!, softmax, tmean
 export add_reporter!
 export configure_new!, configure_crossover!, mutate!
 
