@@ -29,6 +29,8 @@ include("reporting.jl")
 include("statistics.jl")
 include("feedforward.jl")
 include("recurrent.jl")
+include("ctrnn.jl")
+include("iznn.jl")
 include("population.jl")
 include("checkpointer.jl")
 include("export.jl")
@@ -39,6 +41,10 @@ export GenomeConfig, SpeciesConfig, StagnationConfig, ReproductionConfig
 export Genome, NodeGene, ConnectionGene
 export Population, CompleteExtinctionException
 export FeedForwardNetwork, RecurrentNetwork, reset!
+export CTRNNNetwork, CTRNNNodeEval, advance!, set_node_value!
+export IZNNNetwork, IZNeuron, set_inputs!
+export IZ_REGULAR_SPIKING, IZ_INTRINSIC_BURST, IZ_CHATTERING
+export IZ_FAST_SPIKING, IZ_THALAMO_CORTICAL, IZ_RESONATOR, IZ_LOW_THRESHOLD
 export Reporter, StdOutReporter, StatisticsReporter
 export Checkpointer, CheckpointData, save_checkpoint, restore_checkpoint
 

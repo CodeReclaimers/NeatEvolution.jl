@@ -139,6 +139,19 @@ function export_network_json(genome::Genome, config::GenomeConfig, filename::Str
             "bias" => node.bias,
             "response" => node.response
         )
+        # Conditionally add CTRNN time_constant
+        if !isnan(node.time_constant)
+            node_dict["time_constant"] = node.time_constant
+        end
+        # Conditionally add Izhikevich parameters
+        if !isnan(node.iz_a)
+            node_dict["izhikevich"] = Dict(
+                "iz_a" => node.iz_a,
+                "iz_b" => node.iz_b,
+                "iz_c" => node.iz_c,
+                "iz_d" => node.iz_d
+            )
+        end
         push!(nodes_array, node_dict)
     end
 
@@ -289,6 +302,20 @@ function import_network_json_v1(network_data::Dict, config::GenomeConfig)
             node.aggregation = Symbol(node_data["aggregation"])
         end
 
+        # Import CTRNN time_constant if present
+        if haskey(node_data, "time_constant")
+            node.time_constant = node_data["time_constant"]
+        end
+
+        # Import Izhikevich parameters if present
+        if haskey(node_data, "izhikevich")
+            iz = node_data["izhikevich"]
+            node.iz_a = iz["iz_a"]
+            node.iz_b = iz["iz_b"]
+            node.iz_c = iz["iz_c"]
+            node.iz_d = iz["iz_d"]
+        end
+
         genome.nodes[node_id] = node
     end
 
@@ -433,6 +460,17 @@ function export_population_json(population::Dict{Int, Genome},
                 "bias" => node.bias,
                 "response" => node.response
             )
+            if !isnan(node.time_constant)
+                node_dict["time_constant"] = node.time_constant
+            end
+            if !isnan(node.iz_a)
+                node_dict["izhikevich"] = Dict(
+                    "iz_a" => node.iz_a,
+                    "iz_b" => node.iz_b,
+                    "iz_c" => node.iz_c,
+                    "iz_d" => node.iz_d
+                )
+            end
             push!(nodes_array, node_dict)
         end
 

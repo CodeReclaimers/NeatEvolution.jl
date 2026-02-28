@@ -45,6 +45,13 @@ struct GenomeConfig
     weight_attr::FloatAttribute
     enabled_attr::BoolAttribute
 
+    # Optional CTRNN/IZNN attributes (nothing when not configured)
+    time_constant_attr::Union{FloatAttribute, Nothing}
+    iz_a_attr::Union{FloatAttribute, Nothing}
+    iz_b_attr::Union{FloatAttribute, Nothing}
+    iz_c_attr::Union{FloatAttribute, Nothing}
+    iz_d_attr::Union{FloatAttribute, Nothing}
+
     # Node indexer for generating new node IDs
     node_indexer::Ref{Int}
 
@@ -78,6 +85,27 @@ function GenomeConfig(params::Dict)
     validate(aggregation_attr)
     validate(weight_attr)
 
+    # Optional CTRNN attribute (created when time_constant_init_mean is present)
+    time_constant_attr = if haskey(params, :time_constant_init_mean)
+        tc = FloatAttribute(:time_constant, params)
+        validate(tc)
+        tc
+    else
+        nothing
+    end
+
+    # Optional Izhikevich attributes (created when iz_a_init_mean is present)
+    iz_a_attr, iz_b_attr, iz_c_attr, iz_d_attr = if haskey(params, :iz_a_init_mean)
+        a = FloatAttribute(:iz_a, params)
+        b = FloatAttribute(:iz_b, params)
+        c = FloatAttribute(:iz_c, params)
+        d = FloatAttribute(:iz_d, params)
+        validate(a); validate(b); validate(c); validate(d)
+        (a, b, c, d)
+    else
+        (nothing, nothing, nothing, nothing)
+    end
+
     # Determine starting node indexer value
     max_node_id = isempty(output_keys) ? 0 : maximum(output_keys)
 
@@ -107,6 +135,11 @@ function GenomeConfig(params::Dict)
         aggregation_attr,
         weight_attr,
         enabled_attr,
+        time_constant_attr,
+        iz_a_attr,
+        iz_b_attr,
+        iz_c_attr,
+        iz_d_attr,
         Ref(max_node_id + 1),
         Ref(0),  # innovation_indexer starts at 0
         Ref(Dict{Tuple{Int,Int}, Int}())  # innovation_cache starts empty

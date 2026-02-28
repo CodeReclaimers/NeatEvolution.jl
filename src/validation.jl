@@ -73,7 +73,52 @@ const KNOWN_GENOME_PARAMS = Set([
     :enabled_default,
     :enabled_mutate_rate,
     :enabled_rate_to_true_add,
-    :enabled_rate_to_false_add
+    :enabled_rate_to_false_add,
+    # CTRNN time_constant attributes
+    :time_constant_init_mean,
+    :time_constant_init_stdev,
+    :time_constant_init_type,
+    :time_constant_replace_rate,
+    :time_constant_mutate_rate,
+    :time_constant_mutate_power,
+    :time_constant_min_value,
+    :time_constant_max_value,
+    # Izhikevich iz_a attributes
+    :iz_a_init_mean,
+    :iz_a_init_stdev,
+    :iz_a_init_type,
+    :iz_a_replace_rate,
+    :iz_a_mutate_rate,
+    :iz_a_mutate_power,
+    :iz_a_min_value,
+    :iz_a_max_value,
+    # Izhikevich iz_b attributes
+    :iz_b_init_mean,
+    :iz_b_init_stdev,
+    :iz_b_init_type,
+    :iz_b_replace_rate,
+    :iz_b_mutate_rate,
+    :iz_b_mutate_power,
+    :iz_b_min_value,
+    :iz_b_max_value,
+    # Izhikevich iz_c attributes
+    :iz_c_init_mean,
+    :iz_c_init_stdev,
+    :iz_c_init_type,
+    :iz_c_replace_rate,
+    :iz_c_mutate_rate,
+    :iz_c_mutate_power,
+    :iz_c_min_value,
+    :iz_c_max_value,
+    # Izhikevich iz_d attributes
+    :iz_d_init_mean,
+    :iz_d_init_stdev,
+    :iz_d_init_type,
+    :iz_d_replace_rate,
+    :iz_d_mutate_rate,
+    :iz_d_mutate_power,
+    :iz_d_min_value,
+    :iz_d_max_value
 ])
 
 const KNOWN_SPECIES_PARAMS = Set([

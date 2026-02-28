@@ -4,6 +4,9 @@ using Random
 
 # Include test files
 include("test_genes.jl")
+include("test_ctrnn_iznn_genes.jl")
+include("test_ctrnn.jl")
+include("test_iznn.jl")
 include("test_population_seeding.jl")
 include("test_recurrent.jl")
 include("test_checkpointer.jl")
@@ -1733,7 +1736,9 @@ include("test_checkpointer.jl")
             # Add a hidden node
             new_node_id = maximum(union(config.genome_config.output_keys,
                                        [k for k in keys(genome.nodes)])) + 1
-            genome.nodes[new_node_id] = NodeGene(new_node_id, 0.5, 1.0, :sigmoid, :sum)
+            node = NodeGene(new_node_id)
+            node.bias = 0.5
+            genome.nodes[new_node_id] = node
 
             # Add some connections
             genome.connections[(config.genome_config.input_keys[1], new_node_id)] =

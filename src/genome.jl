@@ -518,6 +518,13 @@ function _node_distance_simple(genome1::Genome, genome2::Genome, config::GenomeC
             if n1.aggregation != n2.aggregation
                 weight_diff += 1.0
             end
+            if !isnan(n1.time_constant) && !isnan(n2.time_constant)
+                weight_diff += abs(n1.time_constant - n2.time_constant)
+            end
+            if !isnan(n1.iz_a) && !isnan(n2.iz_a)
+                weight_diff += abs(n1.iz_a - n2.iz_a) + abs(n1.iz_b - n2.iz_b) +
+                               abs(n1.iz_c - n2.iz_c) + abs(n1.iz_d - n2.iz_d)
+            end
             matching += 1
         end
     end

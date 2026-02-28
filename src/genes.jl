@@ -13,10 +13,17 @@ mutable struct NodeGene
     response::Float64
     activation::Symbol
     aggregation::Symbol
+    # CTRNN temporal dynamics parameter
+    time_constant::Float64   # tau: controls response speed (NaN = not configured)
+    # Izhikevich neuron model parameters
+    iz_a::Float64            # recovery time scale (NaN = not configured)
+    iz_b::Float64            # recovery sensitivity
+    iz_c::Float64            # after-spike reset potential (mV)
+    iz_d::Float64            # after-spike recovery increment
 end
 
 function NodeGene(key::Int)
-    NodeGene(key, 0.0, 1.0, :sigmoid, :sum)
+    NodeGene(key, 0.0, 1.0, :sigmoid, :sum, NaN, NaN, NaN, NaN, NaN)
 end
 
 function init_attributes!(gene::NodeGene, config, rng::AbstractRNG=Random.GLOBAL_RNG)
@@ -24,6 +31,15 @@ function init_attributes!(gene::NodeGene, config, rng::AbstractRNG=Random.GLOBAL
     gene.response = init_value(config.response_attr, rng)
     gene.activation = init_value(config.activation_attr, rng)
     gene.aggregation = init_value(config.aggregation_attr, rng)
+    if config.time_constant_attr !== nothing
+        gene.time_constant = init_value(config.time_constant_attr, rng)
+    end
+    if config.iz_a_attr !== nothing
+        gene.iz_a = init_value(config.iz_a_attr, rng)
+        gene.iz_b = init_value(config.iz_b_attr, rng)
+        gene.iz_c = init_value(config.iz_c_attr, rng)
+        gene.iz_d = init_value(config.iz_d_attr, rng)
+    end
     return gene
 end
 
@@ -32,11 +48,21 @@ function mutate!(gene::NodeGene, config, rng::AbstractRNG=Random.GLOBAL_RNG)
     gene.response = mutate_value(config.response_attr, gene.response, rng)
     gene.activation = mutate_value(config.activation_attr, gene.activation, rng)
     gene.aggregation = mutate_value(config.aggregation_attr, gene.aggregation, rng)
+    if config.time_constant_attr !== nothing
+        gene.time_constant = mutate_value(config.time_constant_attr, gene.time_constant, rng)
+    end
+    if config.iz_a_attr !== nothing
+        gene.iz_a = mutate_value(config.iz_a_attr, gene.iz_a, rng)
+        gene.iz_b = mutate_value(config.iz_b_attr, gene.iz_b, rng)
+        gene.iz_c = mutate_value(config.iz_c_attr, gene.iz_c, rng)
+        gene.iz_d = mutate_value(config.iz_d_attr, gene.iz_d, rng)
+    end
     return gene
 end
 
 function Base.copy(gene::NodeGene)
-    return NodeGene(gene.key, gene.bias, gene.response, gene.activation, gene.aggregation)
+    return NodeGene(gene.key, gene.bias, gene.response, gene.activation, gene.aggregation,
+                    gene.time_constant, gene.iz_a, gene.iz_b, gene.iz_c, gene.iz_d)
 end
 
 function crossover(gene1::NodeGene, gene2::NodeGene, rng::AbstractRNG=Random.GLOBAL_RNG)
@@ -47,6 +73,11 @@ function crossover(gene1::NodeGene, gene2::NodeGene, rng::AbstractRNG=Random.GLO
     new_gene.response = rand(rng, Bool) ? gene1.response : gene2.response
     new_gene.activation = rand(rng, Bool) ? gene1.activation : gene2.activation
     new_gene.aggregation = rand(rng, Bool) ? gene1.aggregation : gene2.aggregation
+    new_gene.time_constant = rand(rng, Bool) ? gene1.time_constant : gene2.time_constant
+    new_gene.iz_a = rand(rng, Bool) ? gene1.iz_a : gene2.iz_a
+    new_gene.iz_b = rand(rng, Bool) ? gene1.iz_b : gene2.iz_b
+    new_gene.iz_c = rand(rng, Bool) ? gene1.iz_c : gene2.iz_c
+    new_gene.iz_d = rand(rng, Bool) ? gene1.iz_d : gene2.iz_d
 
     return new_gene
 end
@@ -58,6 +89,16 @@ function distance(gene1::NodeGene, gene2::NodeGene, config)
     end
     if gene1.aggregation != gene2.aggregation
         d += 1.0
+    end
+    # Include CTRNN/IZNN parameters when both genes have them configured
+    if !isnan(gene1.time_constant) && !isnan(gene2.time_constant)
+        d += abs(gene1.time_constant - gene2.time_constant)
+    end
+    if !isnan(gene1.iz_a) && !isnan(gene2.iz_a)
+        d += abs(gene1.iz_a - gene2.iz_a)
+        d += abs(gene1.iz_b - gene2.iz_b)
+        d += abs(gene1.iz_c - gene2.iz_c)
+        d += abs(gene1.iz_d - gene2.iz_d)
     end
     return d * config.compatibility_weight_coefficient
 end
