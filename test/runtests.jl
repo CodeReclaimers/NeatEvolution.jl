@@ -12,6 +12,11 @@ include("test_recurrent.jl")
 include("test_checkpointer.jl")
 include("test_stagnation.jl")
 include("test_speciation.jl")
+include("test_attributes.jl")
+include("test_validation.jl")
+include("test_genome_operations.jl")
+include("test_reproduction.jl")
+include("test_misc_coverage.jl")
 
 @testset "NeatEvolution.jl" begin
     @testset "Config Loading" begin
