@@ -11,14 +11,17 @@ normalized next-step (x, y, z) as output. Fitness is negative mean squared
 error, so evolution drives fitness toward zero.
 
 Usage:
-    julia --project examples/lorenz_ctrnn/lorenz_ctrnn.jl
-    julia --project examples/lorenz_ctrnn/lorenz_ctrnn.jl --products
+    julia --project examples/lorenz_ctrnn/lorenz_ctrnn.jl [--products] [--z-only]
 
-The --products flag augments inputs with pairwise products (xy, xz, yz),
-giving the network 6 inputs instead of 3. This tests whether z-prediction
-failure is a representation problem: the z dynamics (dz/dt = xy - βz) require
-a bilinear term that small networks with additive aggregation struggle to
-discover on their own.
+Flags:
+    --products  Augment inputs with pairwise products (xy, xz, yz), giving
+                6 inputs instead of 3. Tests whether prediction difficulty is
+                a representation problem.
+    --z-only    Predict only z instead of all three variables. Demonstrates
+                that z-prediction failure in 3-output mode is partly due to
+                fitness dilution: easy x/y gains mask z improvement signal.
+
+These flags combine: --products --z-only gives the best z prediction.
 """
 
 using NeatEvolution
@@ -171,8 +174,16 @@ end
 
 # --- Fitness evaluation ---
 
-function make_eval_genomes(train_data::Matrix{Float64})
+"""
+    make_eval_genomes(train_data, target_rows) -> Function
+
+Build a fitness function. `target_rows` specifies which rows of the normalized
+data are prediction targets (e.g., [1,2,3] for x,y,z or [3] for z-only).
+Network output i is compared against `train_data[target_rows[i], t+1]`.
+"""
+function make_eval_genomes(train_data::Matrix{Float64}, target_rows::Vector{Int})
     n_steps = size(train_data, 2) - 1  # predict t+1 from t
+    n_outputs = length(target_rows)
 
     function eval_genomes(genomes, config)
         for (genome_id, genome) in genomes
@@ -192,14 +203,13 @@ function make_eval_genomes(train_data::Matrix{Float64})
                     break
                 end
 
-                # Target is always the x,y,z (first 3 rows) at next timestep
-                for i in 1:3
-                    total_se += (output[i] - train_data[i, t + 1])^2
+                for i in 1:n_outputs
+                    total_se += (output[i] - train_data[target_rows[i], t + 1])^2
                 end
             end
 
             if valid
-                genome.fitness = -total_se / (n_steps * 3)
+                genome.fitness = -total_se / (n_steps * n_outputs)
             else
                 genome.fitness = PENALTY_FITNESS
             end
@@ -211,12 +221,13 @@ end
 
 # --- Test evaluation ---
 
-function evaluate_on_test(winner, config, test_data::Matrix{Float64})
+function evaluate_on_test(winner, config, test_data::Matrix{Float64}, target_rows::Vector{Int})
     net = CTRNNNetwork(winner, config.genome_config)
     reset!(net)
 
     n_steps = size(test_data, 2) - 1
-    predictions = Matrix{Float64}(undef, 3, n_steps)
+    n_outputs = length(target_rows)
+    predictions = Matrix{Float64}(undef, n_outputs, n_steps)
     total_se = 0.0
 
     for t in 1:n_steps
@@ -225,19 +236,19 @@ function evaluate_on_test(winner, config, test_data::Matrix{Float64})
         output = advance!(net, input, DATA_DT, DATA_DT)
         predictions[:, t] .= output
 
-        # Target is always the x,y,z (first 3 rows) at next timestep
-        for i in 1:3
-            total_se += (output[i] - test_data[i, t + 1])^2
+        for i in 1:n_outputs
+            total_se += (output[i] - test_data[target_rows[i], t + 1])^2
         end
     end
 
-    mse = total_se / (n_steps * 3)
+    mse = total_se / (n_steps * n_outputs)
     return mse, predictions
 end
 
 # --- Visualization (optional CairoMakie dependency) ---
 
-function try_visualize(winner, config, test_norm, test_raw, norm_params)
+function try_visualize(winner, config, test_norm, test_raw, norm_params,
+                       target_rows::Vector{Int}, target_labels::Vector{String})
     if Base.find_package("CairoMakie") === nothing
         println("\nVisualization skipped: CairoMakie not installed.")
         println("  To enable plots, run:")
@@ -250,49 +261,56 @@ function try_visualize(winner, config, test_norm, test_raw, norm_params)
     println("\nGenerating visualizations...")
     @eval using CairoMakie
 
-    test_mse, pred_norm = evaluate_on_test(winner, config, test_norm)
-    pred_raw = denormalize(pred_norm, norm_params)
-    n_pred = size(pred_raw, 2)
+    test_mse, pred_norm = evaluate_on_test(winner, config, test_norm, target_rows)
+    n_pred = size(pred_norm, 2)
+    n_outputs = length(target_rows)
+
+    # Denormalize predictions back to physical units
+    pred_raw = Matrix{Float64}(undef, n_outputs, n_pred)
+    for (oi, row) in enumerate(target_rows)
+        range = norm_params.max_vals[row] - norm_params.min_vals[row]
+        pred_raw[oi, :] .= (pred_norm[oi, :] .+ 1.0) ./ 2.0 .* range .+ norm_params.min_vals[row]
+    end
 
     results_dir = joinpath(@__DIR__, "results")
     mkpath(results_dir)
 
-    # Plot 1: 3D phase portrait
-    Base.invokelatest() do
-        fig = Figure(size=(1200, 900))
-        ax = Axis3(fig[1, 1],
-            title = "Lorenz Attractor: True vs CTRNN Predicted (test MSE=$(round(test_mse, digits=6)))",
-            xlabel = "x", ylabel = "y", zlabel = "z")
+    # 3D phase portrait (only for 3-output mode)
+    if n_outputs == 3
+        Base.invokelatest() do
+            fig = Figure(size=(1200, 900))
+            ax = Axis3(fig[1, 1],
+                title = "Lorenz Attractor: True vs CTRNN Predicted (test MSE=$(round(test_mse, digits=6)))",
+                xlabel = "x", ylabel = "y", zlabel = "z")
 
-        # True trajectory (use test_raw aligned with predictions: steps 2 through n_pred+1)
-        true_data = test_raw[:, 2:(n_pred + 1)]
-        lines!(ax, true_data[1, :], true_data[2, :], true_data[3, :],
-            color=(:gray70, 0.4), linewidth=1, label="True")
-        lines!(ax, pred_raw[1, :], pred_raw[2, :], pred_raw[3, :],
-            color=:orange, linewidth=1.5, label="Predicted")
-        axislegend(ax, position=:lt)
+            true_data = test_raw[:, 2:(n_pred + 1)]
+            lines!(ax, true_data[1, :], true_data[2, :], true_data[3, :],
+                color=(:gray70, 0.4), linewidth=1, label="True")
+            lines!(ax, pred_raw[1, :], pred_raw[2, :], pred_raw[3, :],
+                color=:orange, linewidth=1.5, label="Predicted")
+            axislegend(ax, position=:lt)
 
-        path = joinpath(results_dir, "lorenz_phase_portrait.png")
-        save(path, fig)
-        println("  Saved: $path")
+            path = joinpath(results_dir, "lorenz_phase_portrait.png")
+            save(path, fig)
+            println("  Saved: $path")
+        end
     end
 
-    # Plot 2: Time series comparison
+    # Time series comparison
     Base.invokelatest() do
-        fig = Figure(size=(1200, 600))
+        fig = Figure(size=(1200, 200 * n_outputs))
         time_axis = (1:n_pred) .* DATA_DT
         true_data = test_raw[:, 2:(n_pred + 1)]
-        labels = ["x", "y", "z"]
 
-        for (row, label) in enumerate(labels)
-            ax = Axis(fig[row, 1],
+        for (oi, (row, label)) in enumerate(zip(target_rows, target_labels))
+            ax = Axis(fig[oi, 1],
                 ylabel = label,
-                xlabel = row == 3 ? "Time (s)" : "")
+                xlabel = oi == n_outputs ? "Time (s)" : "")
             lines!(ax, time_axis, true_data[row, :],
                 color=:gray60, linewidth=1, label="True")
-            lines!(ax, time_axis, pred_raw[row, :],
+            lines!(ax, time_axis, pred_raw[oi, :],
                 color=:orange, linewidth=1.2, label="Predicted")
-            if row == 1
+            if oi == 1
                 axislegend(ax, position=:rt)
             end
         end
@@ -306,18 +324,19 @@ end
 # --- Config loading ---
 
 """
-    load_lorenz_config(; num_inputs::Int=3) -> Config
+    load_lorenz_config(; num_inputs::Int=3, num_outputs::Int=3) -> Config
 
-Load config.toml, overriding num_inputs if product-augmented inputs are used.
+Load config.toml, overriding num_inputs/num_outputs when they differ from the
+defaults (GenomeConfig is immutable, so we round-trip through a temp TOML).
 """
-function load_lorenz_config(; num_inputs::Int=3)
+function load_lorenz_config(; num_inputs::Int=3, num_outputs::Int=3)
     config_path = joinpath(@__DIR__, "config.toml")
-    if num_inputs == 3
+    if num_inputs == 3 && num_outputs == 3
         return load_config(config_path)
     end
-    # Override num_inputs in a temp copy (GenomeConfig is immutable)
     toml = TOML.parsefile(config_path)
     toml["DefaultGenome"]["num_inputs"] = num_inputs
+    toml["DefaultGenome"]["num_outputs"] = num_outputs
     tmp = tempname() * ".toml"
     open(tmp, "w") do io
         TOML.print(io, toml)
@@ -331,15 +350,22 @@ end
 
 function main()
     use_products = "--products" in ARGS
-    start_time = time()
+    z_only       = "--z-only" in ARGS
+    start_time   = time()
 
-    num_inputs = use_products ? 6 : 3
-    mode_str = use_products ? "augmented (x,y,z,xy,xz,yz)" : "standard (x,y,z)"
+    num_inputs  = use_products ? 6 : 3
+    target_rows = z_only ? [3] : [1, 2, 3]
+    num_outputs = length(target_rows)
+    target_labels = z_only ? ["z"] : ["x", "y", "z"]
+
+    input_str  = use_products ? "augmented (x,y,z,xy,xz,yz)" : "standard (x,y,z)"
+    output_str = z_only ? "z only" : "x, y, z"
 
     println("=" ^ 60)
     println("Lorenz Attractor CTRNN Prediction")
     println("=" ^ 60)
-    println("Mode: $mode_str — $num_inputs inputs, 3 outputs")
+    println("Inputs:  $input_str ($num_inputs)")
+    println("Outputs: $output_str ($num_outputs)")
     println("Lorenz parameters: σ=$LORENZ_SIGMA, ρ=$LORENZ_RHO, β=$(round(LORENZ_BETA, digits=4))")
     println("Integration: $TOTAL_STEPS steps at dt=$INTEGRATION_DT, subsampled $(SUBSAMPLE)x (effective dt=$DATA_DT)")
     println("Data split: $(TRANSIENT_STEPS) transient + $(TRAIN_STEPS) train + $(TEST_STEPS) integration steps")
@@ -356,12 +382,12 @@ function main()
     println()
 
     # Load config and create population
-    config = load_lorenz_config(num_inputs=num_inputs)
+    config = load_lorenz_config(num_inputs=num_inputs, num_outputs=num_outputs)
     pop = Population(config)
     add_reporter!(pop, StdOutReporter(true))
 
     # Evolve
-    eval_fn = make_eval_genomes(train_data)
+    eval_fn = make_eval_genomes(train_data, target_rows)
     winner = run!(pop, eval_fn, N_GENERATIONS)
 
     elapsed = time() - start_time
@@ -376,12 +402,25 @@ function main()
     println("  Wall-clock time:      $(round(elapsed, digits=1))s")
 
     # Evaluate on test set
-    test_mse, _ = evaluate_on_test(winner, config, test_data)
+    test_mse, preds = evaluate_on_test(winner, config, test_data, target_rows)
     println("  Test MSE:             $(round(test_mse, digits=6))")
+
+    # Per-output correlation
+    n_steps = size(preds, 2)
+    for (oi, (row, label)) in enumerate(zip(target_rows, target_labels))
+        p = preds[oi, :]
+        t = test_data[row, 2:(n_steps + 1)]
+        pm = sum(p) / n_steps; tm = sum(t) / n_steps
+        cv = sum((p .- pm) .* (t .- tm)) / n_steps
+        sp = sqrt(sum((p .- pm).^2) / n_steps)
+        st = sqrt(sum((t .- tm).^2) / n_steps)
+        corr = (sp > 0 && st > 0) ? cv / (sp * st) : 0.0
+        println("  $label correlation:    $(round(corr, digits=4))")
+    end
     println()
 
     # Visualization (optional)
-    try_visualize(winner, config, test_data, test_raw, norm_params)
+    try_visualize(winner, config, test_data, test_raw, norm_params, target_rows, target_labels)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
