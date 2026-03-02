@@ -11,17 +11,17 @@ normalized next-step (x, y, z) as output. Fitness is negative mean squared
 error, so evolution drives fitness toward zero.
 
 Usage:
-    julia --project examples/lorenz_ctrnn/lorenz_ctrnn.jl [--products] [--z-only]
+    julia --project examples/lorenz_ctrnn/lorenz_ctrnn.jl [--mode MODE] [--z-only]
 
 Flags:
-    --products  Augment inputs with pairwise products (xy, xz, yz), giving
-                6 inputs instead of 3. Tests whether prediction difficulty is
-                a representation problem.
-    --z-only    Predict only z instead of all three variables. Demonstrates
-                that z-prediction failure in 3-output mode is partly due to
-                fitness dilution: easy x/y gains mask z improvement signal.
-
-These flags combine: --products --z-only gives the best z prediction.
+    --mode MODE  Input representation mode (default: base)
+        base         3 inputs (x, y, z)
+        products     6 inputs (x, y, z, xy, xz, yz) — product terms pre-computed
+        product-agg  3 inputs (x, y, z) — product added as aggregation function
+                     so evolution can discover multiplicative nodes
+    --z-only     Predict only z instead of all three variables. Demonstrates
+                 that z-prediction failure in 3-output mode is partly due to
+                 fitness dilution: easy x/y gains mask z improvement signal.
 """
 
 using NeatEvolution
@@ -142,7 +142,7 @@ end
 
 # --- Data preparation ---
 
-function prepare_data(; use_products::Bool=false)
+function prepare_data(; mode::String="base")
     println("Generating Lorenz trajectory ($TOTAL_STEPS steps at dt=$INTEGRATION_DT, subsample=$(SUBSAMPLE)x)...")
     full_traj = generate_lorenz_trajectory(TOTAL_STEPS, INTEGRATION_DT)
 
@@ -160,8 +160,8 @@ function prepare_data(; use_products::Bool=false)
     train_norm  = normalize(train_raw, norm_params)
     test_norm   = normalize(test_raw, norm_params)
 
-    # Augment inputs with product terms if requested
-    if use_products
+    # Augment inputs with product terms in "products" mode
+    if mode == "products"
         train_input = augment_with_products(train_norm)
         test_input  = augment_with_products(test_norm)
     else
@@ -324,19 +324,20 @@ end
 # --- Config loading ---
 
 """
-    load_lorenz_config(; num_inputs::Int=3, num_outputs::Int=3) -> Config
+    load_lorenz_config(; genome_overrides::Dict=Dict()) -> Config
 
-Load config.toml, overriding num_inputs/num_outputs when they differ from the
-defaults (GenomeConfig is immutable, so we round-trip through a temp TOML).
+Load config.toml, applying any overrides to the [DefaultGenome] section.
+GenomeConfig is immutable, so we round-trip through a temp TOML file.
 """
-function load_lorenz_config(; num_inputs::Int=3, num_outputs::Int=3)
+function load_lorenz_config(; genome_overrides::Dict{String,Any}=Dict{String,Any}())
     config_path = joinpath(@__DIR__, "config.toml")
-    if num_inputs == 3 && num_outputs == 3
+    if isempty(genome_overrides)
         return load_config(config_path)
     end
     toml = TOML.parsefile(config_path)
-    toml["DefaultGenome"]["num_inputs"] = num_inputs
-    toml["DefaultGenome"]["num_outputs"] = num_outputs
+    for (k, v) in genome_overrides
+        toml["DefaultGenome"][k] = v
+    end
     tmp = tempname() * ".toml"
     open(tmp, "w") do io
         TOML.print(io, toml)
@@ -348,23 +349,40 @@ end
 
 # --- Main ---
 
-function main()
-    use_products = "--products" in ARGS
-    z_only       = "--z-only" in ARGS
-    start_time   = time()
+function parse_mode(args)
+    idx = findfirst(==("--mode"), args)
+    if idx === nothing || idx >= length(args)
+        return "base"
+    end
+    mode = args[idx + 1]
+    if mode in ("base", "products", "product-agg")
+        return mode
+    end
+    error("Unknown mode '$mode'. Choose from: base, products, product-agg")
+end
 
-    num_inputs  = use_products ? 6 : 3
+const MODE_DESCRIPTIONS = Dict(
+    "base"        => "3 inputs (x, y, z)",
+    "products"    => "6 inputs (x, y, z, xy, xz, yz)",
+    "product-agg" => "3 inputs (x, y, z) + product aggregation",
+)
+
+function main()
+    mode    = parse_mode(ARGS)
+    z_only  = "--z-only" in ARGS
+    start_time = time()
+
+    num_inputs  = mode == "products" ? 6 : 3
     target_rows = z_only ? [3] : [1, 2, 3]
     num_outputs = length(target_rows)
     target_labels = z_only ? ["z"] : ["x", "y", "z"]
 
-    input_str  = use_products ? "augmented (x,y,z,xy,xz,yz)" : "standard (x,y,z)"
     output_str = z_only ? "z only" : "x, y, z"
 
     println("=" ^ 60)
     println("Lorenz Attractor CTRNN Prediction")
     println("=" ^ 60)
-    println("Inputs:  $input_str ($num_inputs)")
+    println("Mode:    $mode — $(MODE_DESCRIPTIONS[mode])")
     println("Outputs: $output_str ($num_outputs)")
     println("Lorenz parameters: σ=$LORENZ_SIGMA, ρ=$LORENZ_RHO, β=$(round(LORENZ_BETA, digits=4))")
     println("Integration: $TOTAL_STEPS steps at dt=$INTEGRATION_DT, subsampled $(SUBSAMPLE)x (effective dt=$DATA_DT)")
@@ -373,7 +391,7 @@ function main()
     println()
 
     # Prepare data
-    train_data, test_data, norm_params, train_raw, test_raw = prepare_data(use_products=use_products)
+    train_data, test_data, norm_params, train_raw, test_raw = prepare_data(mode=mode)
     println("Data shape: $(size(train_data, 1)) inputs × $(size(train_data, 2)) train points")
     println("Normalization ranges (from training data):")
     for (i, label) in enumerate(["x", "y", "z"])
@@ -381,8 +399,21 @@ function main()
     end
     println()
 
+    # Build config overrides based on mode and output count
+    overrides = Dict{String,Any}()
+    if num_inputs != 3
+        overrides["num_inputs"] = num_inputs
+    end
+    if num_outputs != 3
+        overrides["num_outputs"] = num_outputs
+    end
+    if mode == "product-agg"
+        overrides["aggregation_options"] = ["sum", "product"]
+        overrides["aggregation_mutate_rate"] = 0.1
+    end
+
     # Load config and create population
-    config = load_lorenz_config(num_inputs=num_inputs, num_outputs=num_outputs)
+    config = load_lorenz_config(genome_overrides=overrides)
     pop = Population(config)
     add_reporter!(pop, StdOutReporter(true))
 
