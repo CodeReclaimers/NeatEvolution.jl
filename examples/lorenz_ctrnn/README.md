@@ -68,7 +68,9 @@ The z-prediction failure in the default configuration has **two independent caus
 
 - **Representation difficulty (secondary):** The z equation dz/dt = xy - βz requires a bilinear term. Either pre-computing products (`products` mode) or enabling multiplicative aggregation (`product-agg` mode) raises z correlation from 0.83-0.86 to 0.94 in z-only mode.
 
-The `product-agg` mode is the most interesting result: it demonstrates that NEAT can discover the right computational primitive (multiplication) when it's available in the search space, achieving the same performance as hand-engineered product inputs.
+Crucially, `product-agg` in 3-output mode still shows z correlation 0.00-0.15 — solving the representation problem alone is not enough. Fitness dilution prevents evolution from exploiting the product aggregation when x and y improvements offer easier fitness gains. Both problems must be addressed for z to be learned: the representation must support multiplication *and* the fitness signal must not be diluted by easier objectives.
+
+The `product-agg` mode is the most interesting result: it demonstrates that NEAT can discover the right computational primitive (multiplication) when it's available in the search space, achieving the same performance as hand-engineered product inputs — but only when fitness dilution is also eliminated.
 
 ## Visualization (optional)
 
