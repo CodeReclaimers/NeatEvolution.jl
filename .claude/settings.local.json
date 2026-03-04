@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(f:/julia-1.11.3/bin/julia.exe --project -e 'using Pkg; Pkg.test()')"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
