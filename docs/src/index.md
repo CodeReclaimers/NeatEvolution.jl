@@ -30,7 +30,7 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
+Pkg.add(url="https://github.com/CodeReclaimers/NeatEvolution.jl.git")
 ```
 
 ```julia
@@ -63,4 +63,3 @@ See the [Getting Started](getting_started.md) guide and [XOR Example](xor_exampl
 - **[Algorithm Internals](algorithm_internals.md)** — How NEAT works under the hood
 - **[FAQ](faq.md)** — Frequently asked questions
 - **[Troubleshooting](troubleshooting.md)** — Common issues and solutions
-- **[Migration v0 → v1](migration.md)** — Upgrading from pre-1.0 versions

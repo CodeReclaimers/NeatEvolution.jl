@@ -21,14 +21,14 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
+Pkg.add(url="https://github.com/CodeReclaimers/NeatEvolution.jl.git")
 ```
 
 ### For Development
 
 ```bash
-git clone https://github.com/CodeReclaimers/NEAT.git
-cd NEAT
+git clone https://github.com/CodeReclaimers/NeatEvolution.jl.git
+cd NeatEvolution.jl
 julia --project -e 'using Pkg; Pkg.instantiate()'
 ```
 
@@ -293,9 +293,24 @@ outputs = activate!(net, inputs)  # Returns vector of 3 values
 ```julia
 [DefaultGenome]
 feed_forward = false  # Allow recurrent connections
-
-# Networks can now have cycles - useful for temporal problems
 ```
+
+When `feed_forward = false`, use `RecurrentNetwork` instead of `FeedForwardNetwork`:
+
+```julia
+net = RecurrentNetwork(genome, config.genome_config)
+for input in sequence
+    output = activate!(net, input)
+end
+reset!(net)  # clear state between sequences
+```
+
+### Other Network Types
+
+NeatEvolution.jl also provides specialized network types:
+
+- **`CTRNNNetwork`** — Continuous-time recurrent neural network with per-node time constants. Requires `time_constant_*` parameters in config. See [API Reference](api_reference.md).
+- **`IZNNNetwork`** — Izhikevich spiking neural network with biologically realistic dynamics. Requires `iz_a_*`, `iz_b_*`, `iz_c_*`, `iz_d_*` parameters in config. See [API Reference](api_reference.md).
 
 ### Custom Activation Functions
 

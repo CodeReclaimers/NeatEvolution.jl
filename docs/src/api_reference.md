@@ -600,10 +600,20 @@ Get the `n` best genomes.
 
 ---
 
+### best_unique_genomes
+
+```julia
+best_unique_genomes(reporter::StatisticsReporter, n::Int) -> Vector{Genome}
+```
+
+Get the `n` best genomes with unique keys (no duplicates from different generations).
+
+---
+
 ### save_statistics
 
 ```julia
-save_statistics(reporter::StatisticsReporter, prefix::String="neat_stats")
+save_statistics(reporter::StatisticsReporter; prefix="neat_stats")
 ```
 
 Save statistics to CSV files.
@@ -772,6 +782,103 @@ animate_evolution(stats, config.genome_config,
                  filename="evolution.gif",
                  fps=3)
 ```
+
+---
+
+## Network Accessors
+
+### input_nodes
+
+```julia
+input_nodes(net::AbstractNetwork) -> Vector{Int}
+```
+
+Get the input node IDs for any network type.
+
+---
+
+### output_nodes
+
+```julia
+output_nodes(net::AbstractNetwork) -> Vector{Int}
+```
+
+Get the output node IDs for any network type.
+
+---
+
+### num_inputs
+
+```julia
+num_inputs(net::AbstractNetwork) -> Int
+```
+
+Get the number of input nodes.
+
+---
+
+### num_outputs
+
+```julia
+num_outputs(net::AbstractNetwork) -> Int
+```
+
+Get the number of output nodes.
+
+---
+
+## JSON Export/Import
+
+### export_network_json
+
+```julia
+export_network_json(genome::Genome, config::GenomeConfig, filename::String)
+```
+
+Export a genome to a JSON file (neat-python compatible format).
+
+---
+
+### import_network_json
+
+```julia
+import_network_json(filename::String, config::GenomeConfig) -> Genome
+```
+
+Import a genome from a JSON file.
+
+---
+
+### export_population_json
+
+```julia
+export_population_json(population::Dict{Int, Genome}, config::GenomeConfig,
+                       filename::String; top_n=nothing)
+```
+
+Export multiple genomes to a JSON file. If `top_n` is specified, exports only the top N genomes by fitness.
+
+---
+
+## Utility Functions
+
+### softmax
+
+```julia
+softmax(values::AbstractVector{<:Real}) -> Vector{Float64}
+```
+
+Compute softmax normalization of a vector.
+
+---
+
+### tmean
+
+```julia
+tmean(values::AbstractVector{<:Real}; trim::Float64=0.1) -> Float64
+```
+
+Compute trimmed mean, discarding the specified fraction from each end.
 
 ---
 

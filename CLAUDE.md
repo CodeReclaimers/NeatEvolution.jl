@@ -27,6 +27,11 @@ julia --project -e 'using Pkg; Pkg.test("NeatEvolution"; test_args=["--verbose"]
 ```bash
 # Run the XOR example
 julia --project examples/xor/evolve.jl
+
+# Other examples: cartpole, checkpoint_demo, ctrnn_oscillator,
+# inverted_pendulum, inverted_double_pendulum, iznn_pattern,
+# lorenz_ctrnn, sequence
+julia --project examples/cartpole/evolve.jl
 ```
 
 ### Development Setup
@@ -49,7 +54,7 @@ julia --project=docs docs/make.jl
 
 ### CI/CD
 The project uses GitHub Actions for CI, testing on:
-- Julia versions: 1.10, 1.11, nightly
+- Julia versions: 1.10, 1.11, 1.12, nightly
 - Operating systems: Ubuntu, Windows, macOS
 
 ## Architecture
@@ -142,15 +147,59 @@ Neural network evaluation:
 - Computes feed-forward layers for efficient evaluation
 - `activate!`: Runs network with given inputs
 
-#### 13. **reporting.jl**
+#### 13. **recurrent.jl**
+Recurrent neural network evaluation:
+- `RecurrentNetwork`: Handles cyclic connections with internal state
+- Double-buffered values (current/previous timestep)
+- `activate!`: Runs one timestep; `reset!`: Clears state
+
+#### 14. **ctrnn.jl**
+Continuous-Time Recurrent Neural Network:
+- `CTRNNNetwork`: Forward Euler integration with per-node time constants
+- `advance!`: Integrates forward by specified time with configurable step size
+- `set_node_value!`: Injects state into network buffers
+
+#### 15. **iznn.jl**
+Izhikevich spiking neural network:
+- `IZNNNetwork`: Biologically realistic spiking dynamics (a, b, c, d parameters)
+- Spike-based communication (binary 0/1)
+- Named presets for common neuron types (regular spiking, fast spiking, etc.)
+
+#### 16. **reporting.jl**
 Progress reporting:
 - `StdOutReporter`: Prints generation statistics
+- `StatisticsReporter`: Collects per-generation fitness and species data for analysis
 - Tracks fitness, species, and population size
 - Reports solutions and extinction events
 
-#### 14. **utils.jl**
+#### 17. **statistics.jl**
+Statistics collection and export:
+- `StatisticsReporter`: Records fitness statistics and species data each generation
+- `save_statistics`: Exports collected data to CSV files
+- `best_genome`, `best_genomes`, `best_unique_genomes`: Query best performers
+
+#### 18. **checkpointer.jl**
+Evolution checkpointing:
+- `Checkpointer`: Reporter that saves population state at configurable intervals
+- `save_checkpoint` / `restore_checkpoint`: Manual save/restore via Serialization
+- Supports generation-based and time-based intervals
+
+#### 19. **export.jl**
+JSON export/import for model sharing:
+- `export_network_json` / `import_network_json`: Single genome serialization
+- `export_population_json`: Batch export of top genomes
+- Compatible with neat-python JSON format
+
+#### 20. **validation.jl**
+Configuration validation:
+- Validates TOML config files against known parameter names
+- Detects typos and unknown parameters
+- Warns about missing recommended parameters
+
+#### 21. **utils.jl**
 Utility functions:
 - Statistical functions (mean, median, stdev, variance)
+- `tmean`: Trimmed mean; `softmax`: Softmax normalization
 - Stat function registry for configuration
 
 ### File Structure
@@ -158,32 +207,65 @@ Utility functions:
 src/
 ├── NeatEvolution.jl     # Main module with exports
 ├── attributes.jl        # Attribute system
-├── genes.jl            # Node and Connection genes
-├── genome.jl           # Genome with mutation/crossover
-├── species.jl          # Speciation logic
-├── reproduction.jl     # Reproduction and elitism
-├── stagnation.jl       # Species stagnation tracking
-├── population.jl       # Main evolution loop
-├── config.jl           # Configuration system (TOML)
-├── activations.jl      # Activation functions
-├── aggregations.jl     # Aggregation functions
-├── graphs.jl           # Graph algorithms
-├── feedforward.jl      # Feed-forward network evaluation
-├── reporting.jl        # Progress reporting
-└── utils.jl            # Math utilities
+├── genes.jl             # Node and Connection genes
+├── genome.jl            # Genome with mutation/crossover
+├── config.jl            # Configuration system (TOML)
+├── validation.jl        # Config validation and typo detection
+├── species.jl           # Speciation logic
+├── reproduction.jl      # Reproduction and elitism
+├── stagnation.jl        # Species stagnation tracking
+├── population.jl        # Main evolution loop
+├── activations.jl       # Activation functions
+├── aggregations.jl      # Aggregation functions
+├── graphs.jl            # Graph algorithms
+├── feedforward.jl       # Feed-forward network evaluation
+├── recurrent.jl         # Recurrent network evaluation
+├── ctrnn.jl             # Continuous-time recurrent network
+├── iznn.jl              # Izhikevich spiking network
+├── reporting.jl         # Progress reporting
+├── statistics.jl        # Statistics collection and CSV export
+├── checkpointer.jl      # Evolution checkpointing
+├── export.jl            # JSON export/import
+└── utils.jl             # Math utilities
+
+ext/
+├── NeatEvolutionVisualizationExt.jl   # Plots.jl visualization extension
+└── NeatEvolutionGraphMakieExt.jl      # GraphMakie interactive visualization
 
 examples/
-└── xor/
-    ├── config.toml     # XOR configuration
-    └── evolve.jl       # XOR evolution script
+├── xor/                 # Classic XOR benchmark
+├── cartpole/            # Cart-pole balancing
+├── sequence/            # Sequence prediction (recurrent)
+├── ctrnn_oscillator/    # CTRNN oscillator
+├── iznn_pattern/        # Izhikevich spiking patterns
+├── checkpoint_demo/     # Checkpointing demonstration
+├── inverted_pendulum/   # Inverted pendulum control
+├── inverted_double_pendulum/  # Double pendulum control
+└── lorenz_ctrnn/        # Lorenz attractor with CTRNN
 
 test/
-└── runtests.jl         # Test suite with XOR test
+├── runtests.jl              # Test runner
+├── test_attributes.jl       # Attribute system tests
+├── test_genes.jl            # Gene tests
+├── test_genome_operations.jl # Genome operation tests
+├── test_config.toml         # Test configuration
+├── test_speciation.jl       # Speciation tests
+├── test_stagnation.jl       # Stagnation tests
+├── test_reproduction.jl     # Reproduction tests
+├── test_recurrent.jl        # Recurrent network tests
+├── test_ctrnn.jl            # CTRNN tests
+├── test_iznn.jl             # Izhikevich network tests
+├── test_ctrnn_iznn_genes.jl # CTRNN/IZNN gene tests
+├── test_checkpointer.jl     # Checkpointing tests
+├── test_validation.jl       # Validation tests
+├── test_population_seeding.jl # Population seeding tests
+└── test_misc_coverage.jl    # Additional coverage tests
 ```
 
 ### Package Metadata
 - UUID: `fcc92617-70eb-4c43-847c-323c44b5224c`
-- Dependencies: Random, Statistics, TOML (all stdlib)
+- Stdlib dependencies: Dates, Random, Serialization, Statistics, TOML
+- External dependencies: FunctionWrappers, JSON
 
 ## Configuration Files
 
@@ -287,6 +369,7 @@ This is useful for:
 - Leverages multiple dispatch for polymorphic behavior
 - TOML configuration (Julia-native format)
 - Follows neat-python's core algorithms for compatibility
-- Pure Julia implementation with no external dependencies
+- Pure Julia implementation (external deps: JSON, FunctionWrappers only)
+- Optional visualization via package extensions (Plots.jl, GraphMakie)
 
 When implementing new functionality, follow Julia package conventions and ensure compatibility with Julia 1.10+ (LTS) through nightly builds.

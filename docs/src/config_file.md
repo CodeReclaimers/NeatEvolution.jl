@@ -170,6 +170,36 @@ Response is a multiplier applied to the node's aggregated input.
 |-----------|------|---------|-------------|
 | `enabled_default` | Boolean | `true` | Default enabled status for new connections |
 | `enabled_mutate_rate` | Float [0-1] | 0.01 | Probability of toggling enabled status |
+| `enabled_rate_to_true_add` | Float [0-1] | 0.0 | Additional probability bias toward re-enabling |
+| `enabled_rate_to_false_add` | Float [0-1] | 0.0 | Additional probability bias toward disabling |
+
+### CTRNN Time Constant (Optional)
+
+These parameters are only needed when using `CTRNNNetwork`. They are activated by the presence of `time_constant_init_mean` in the config.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `time_constant_init_mean` | Float | Yes | Mean for time constant initialization |
+| `time_constant_init_stdev` | Float | Yes | Standard deviation for initialization |
+| `time_constant_init_type` | String | No | Distribution type (default: `"gaussian"`) |
+| `time_constant_max_value` | Float | Yes | Maximum time constant value |
+| `time_constant_min_value` | Float | Yes | Minimum time constant value |
+| `time_constant_mutate_power` | Float | Yes | Standard deviation for mutations |
+| `time_constant_mutate_rate` | Float [0-1] | Yes | Probability of mutation |
+| `time_constant_replace_rate` | Float [0-1] | Yes | Probability of replacement |
+
+### Izhikevich Neuron Parameters (Optional)
+
+These parameters are only needed when using `IZNNNetwork`. They are activated by the presence of `iz_a_init_mean` in the config. Each of the four Izhikevich parameters (a, b, c, d) follows the same attribute pattern.
+
+| Parameter prefix | Description |
+|-----------------|-------------|
+| `iz_a_*` | Recovery time scale |
+| `iz_b_*` | Recovery sensitivity to membrane potential |
+| `iz_c_*` | After-spike reset potential (mV) |
+| `iz_d_*` | After-spike recovery increment |
+
+Each prefix supports the standard `FloatAttribute` suffixes: `_init_mean`, `_init_stdev`, `_init_type`, `_max_value`, `_min_value`, `_mutate_power`, `_mutate_rate`, `_replace_rate`.
 
 ## [DefaultSpeciesSet] Section
 
@@ -215,7 +245,7 @@ Controls selection and reproduction.
 |-----------|------|---------|-------------|
 | `elitism` | Integer | 0 | Number of most-fit individuals preserved unchanged |
 | `survival_threshold` | Float [0-1] | 0.2 | Fraction of each species allowed to reproduce |
-| `min_species_size` | Integer | 2 | Minimum number of genomes per species after reproduction |
+| `min_species_size` | Integer | 1 | Minimum number of genomes per species after reproduction |
 
 ### Example
 

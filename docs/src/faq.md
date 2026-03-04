@@ -79,7 +79,7 @@ Cite both the original NEAT paper and this implementation:
   title={NeatEvolution.jl: NeuroEvolution of Augmenting Topologies in Julia},
   author={CodeReclaimers},
   year={2025},
-  url={https://github.com/CodeReclaimers/NEAT}
+  url={https://github.com/CodeReclaimers/NeatEvolution.jl}
 }
 ```
 
@@ -758,19 +758,23 @@ export_network_json(winner, config.genome_config, "model.json")
 
 ### Can I continue evolution from a checkpoint?
 
-**Currently**: No built-in checkpointing (planned for future release)
-
-**Workaround**: Save best genome and restart with it:
+**Yes!** NeatEvolution.jl has built-in checkpointing:
 
 ```julia
-# After some generations
-best = best_genome(stats)
-export_network_json(best, config.genome_config, "checkpoint.json")
+# Add checkpointer during evolution
+add_reporter!(pop, Checkpointer(generation_interval=10))
 
-# Later: load and use as seed
-loaded = import_network_json("checkpoint.json", config.genome_config)
+# Later: restore and continue
+pop = restore_checkpoint("neat-checkpoint-50")
+add_reporter!(pop, StdOutReporter())
+winner = run!(pop, eval_genomes, 50)  # run 50 more generations
+```
 
-# Manually add to new population (requires custom code)
+You can also manually save/restore:
+
+```julia
+save_checkpoint("my_checkpoint", pop)
+pop = restore_checkpoint("my_checkpoint")
 ```
 
 ---

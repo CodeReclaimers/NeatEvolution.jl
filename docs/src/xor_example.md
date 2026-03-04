@@ -21,9 +21,10 @@ The challenge: this function cannot be solved by a single-layer perceptron (it r
 
 ```
 examples/xor/
-├── config.toml                      # NEAT configuration
-├── evolve.jl                        # Basic evolution script
-└── evolve_with_visualization.jl     # Evolution + visualization
+├── config.toml                              # NEAT configuration
+├── evolve.jl                                # Basic evolution script
+├── evolve_with_visualization.jl             # Evolution + static visualization
+└── evolve_with_interactive_visualization.jl # Evolution + interactive visualization
 ```
 
 ## Step-by-Step Implementation
@@ -351,16 +352,25 @@ draw_net(winner, config.genome_config,
 
 ### Saving/Loading Genomes
 
+The preferred approaches for saving and loading genomes are JSON export and checkpointing:
+
 ```julia
-# Evolution completed - save winner
+# JSON export (portable, neat-python compatible)
+export_network_json(winner, config.genome_config, "winner.json")
+imported = import_network_json("winner.json", config.genome_config)
+
+# Checkpointing (saves full population state)
+add_reporter!(pop, Checkpointer(generation_interval=10))
+# Later: restore and continue evolution
+pop = restore_checkpoint("neat-checkpoint-50")
+```
+
+You can also use Julia's built-in serialization:
+
+```julia
 using Serialization
-
 serialize("winner.jls", winner)
-
-# Later, load and use
 winner = deserialize("winner.jls")
-net = FeedForwardNetwork(winner, config.genome_config)
-result = activate!(net, [1.0, 0.0])
 ```
 
 ## Troubleshooting

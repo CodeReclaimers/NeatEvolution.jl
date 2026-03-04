@@ -1,7 +1,7 @@
 # NeatEvolution.jl
 
-[![CI](https://github.com/CodeReclaimers/NEAT/actions/workflows/CI.yaml/badge.svg)](https://github.com/CodeReclaimers/NEAT/actions/workflows/CI.yaml)
-[![codecov](https://codecov.io/gh/CodeReclaimers/NEAT/graph/badge.svg?token=BMK6EVEC48)](https://codecov.io/gh/CodeReclaimers/NEAT)
+[![CI](https://github.com/CodeReclaimers/NeatEvolution.jl/actions/workflows/CI.yaml/badge.svg)](https://github.com/CodeReclaimers/NeatEvolution.jl/actions/workflows/CI.yaml)
+[![codecov](https://codecov.io/gh/CodeReclaimers/NeatEvolution.jl/graph/badge.svg?token=BMK6EVEC48)](https://codecov.io/gh/CodeReclaimers/NeatEvolution.jl)
 
 A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies), the evolutionary algorithm that creates artificial neural networks.
 
@@ -27,13 +27,15 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - Speciation with genomic distance
 
 ✅ **Complete Functionality**
-- Feed-forward and recurrent networks
+- Four network types: feed-forward, recurrent, CTRNN (continuous-time), and Izhikevich spiking
 - 18 built-in activation functions
 - 7 aggregation functions
 - Multiple initial connection strategies
 - Comprehensive mutation operators
 - JSON export/import for model sharing (neat-python compatible)
 - Population seeding with imported genomes for transfer learning
+- Checkpointing for saving and restoring evolution state
+- StatisticsReporter for fitness/species tracking and CSV export
 
 ✅ **Visualization** (Optional)
 - Fitness evolution plots
@@ -47,7 +49,6 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 - Code coverage reporting
 - Continuous integration
 - Comprehensive troubleshooting guide
-- Migration guides for version updates
 
 ## Quick Start
 
@@ -55,7 +56,7 @@ NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural n
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/CodeReclaimers/NEAT.git")
+Pkg.add(url="https://github.com/CodeReclaimers/NeatEvolution.jl.git")
 ```
 
 ### Basic Example
@@ -126,7 +127,6 @@ This is useful for:
 📖 **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
 📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Common problems and solutions
 📖 **[FAQ](docs/faq.md)** - Frequently asked questions
-📖 **[Migration Guide v0→v0.1](docs/MIGRATION_v0_to_v1.md)** - Upgrading to v0.1.0
 
 ## Example: Solving XOR
 
@@ -213,7 +213,6 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 - ✅ JSON export/import for model sharing
 - ✅ Stricter configuration validation with typo detection
 - ✅ Comprehensive troubleshooting guide and FAQ
-- See [Migration Guide](docs/MIGRATION_v0_to_v1.md) for upgrading
 
 **v0.0.x** - Initial Implementation
 - Basic NEAT algorithm
@@ -230,16 +229,23 @@ All tests should pass!
 
 ## Examples
 
-### XOR Problem
-Located in `examples/xor/`:
-- `evolve.jl` - Basic evolution script
-- `evolve_with_visualization.jl` - With full visualization
-- `config.toml` - NEAT configuration
+The `examples/` directory contains complete working examples:
 
-Run with:
+| Directory | Description |
+|-----------|-------------|
+| `xor/` | Classic XOR benchmark (feed-forward) |
+| `cartpole/` | Cart-pole balancing control task |
+| `sequence/` | Sequence prediction with recurrent networks |
+| `ctrnn_oscillator/` | CTRNN oscillator demonstration |
+| `iznn_pattern/` | Izhikevich spiking network patterns |
+| `checkpoint_demo/` | Checkpointing save/restore demonstration |
+| `inverted_pendulum/` | Inverted pendulum control |
+| `inverted_double_pendulum/` | Double inverted pendulum control |
+| `lorenz_ctrnn/` | Lorenz attractor with CTRNN |
+
+Run any example with:
 ```bash
-cd examples/xor
-julia --project=../.. evolve_with_visualization.jl
+julia --project examples/xor/evolve.jl
 ```
 
 ## Contributing

@@ -19,9 +19,8 @@ makedocs(
         "Help" => [
             "FAQ" => "faq.md",
             "Troubleshooting" => "troubleshooting.md",
-            "Migration v0 → v1" => "migration.md",
         ],
     ],
 )
 
-deploydocs(repo = "github.com/CodeReclaimers/NEAT.git")
+deploydocs(repo = "github.com/CodeReclaimers/NeatEvolution.jl.git")
