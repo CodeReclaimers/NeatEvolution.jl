@@ -18,9 +18,14 @@ coverage:
         threshold: 1%
 
 comment:
-  layout: "reach,diff,flags,tree"
+  layout: "reach,diff,flags,files,footer"
   behavior: default
   require_changes: false
+  require_base: false
+  require_head: true
+
+github_checks:
+  annotations: true
 
 ignore:
   - "test/**/*"
