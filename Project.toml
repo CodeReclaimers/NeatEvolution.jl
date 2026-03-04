@@ -1,6 +1,6 @@
 name = "NeatEvolution"
 uuid = "fcc92617-70eb-4c43-847c-323c44b5224c"
-authors = ["CodeReclaimers <CodeReclaimers@users.noreply.github.com>"]
+authors = ["CodeReclaimers <alan@codereclaimers.com>"]
 version = "0.1.0"
 
 [deps]
@@ -29,7 +29,7 @@ GraphMakie = "0.5"
 Graphs = "1.9"
 JSON = "0.21"
 Plots = "1.38"
-julia = "1.9"
+julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
