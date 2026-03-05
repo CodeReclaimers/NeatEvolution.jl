@@ -61,25 +61,11 @@ NeatEvolution.jl is a faithful Julia port of neat-python with these key differen
 
 ### How do I cite NeatEvolution.jl in academic work?
 
-Cite both the original NEAT paper and this implementation:
-
 ```bibtex
-@article{stanley2002evolving,
-  title={Evolving neural networks through augmenting topologies},
-  author={Stanley, Kenneth O and Miikkulainen, Risto},
-  journal={Evolutionary computation},
-  volume={10},
-  number={2},
-  pages={99--127},
-  year={2002},
-  publisher={MIT Press}
-}
-
-@software{neat_jl,
-  title={NeatEvolution.jl: NeuroEvolution of Augmenting Topologies in Julia},
-  author={CodeReclaimers},
-  year={2025},
-  url={https://github.com/CodeReclaimers/NeatEvolution.jl}
+@software{McIntyre_NeatEvolution_jl,
+  author = {McIntyre, Alan},
+  title = {{NeatEvolution.jl}},
+  url = {https://github.com/CodeReclaimers/NeatEvolution.jl}
 }
 ```
 

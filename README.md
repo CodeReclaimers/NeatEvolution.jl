@@ -257,20 +257,15 @@ Contributions welcome! Please:
 4. Ensure all tests pass
 5. Submit a pull request
 
-## Citation
+## Citing
 
-If you use NeatEvolution.jl in your research, please cite the original NEAT paper:
+If you use NeatEvolution.jl in a publication, you can cite it using the following BibTeX entry:
 
 ```bibtex
-@article{stanley2002evolving,
-  title={Evolving neural networks through augmenting topologies},
-  author={Stanley, Kenneth O and Miikkulainen, Risto},
-  journal={Evolutionary computation},
-  volume={10},
-  number={2},
-  pages={99--127},
-  year={2002},
-  publisher={MIT Press}
+@software{McIntyre_NeatEvolution_jl,
+  author = {McIntyre, Alan},
+  title = {{NeatEvolution.jl}},
+  url = {https://github.com/CodeReclaimers/NeatEvolution.jl}
 }
 ```
 
