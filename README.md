@@ -117,16 +117,16 @@ This is useful for:
 
 ## Documentation
 
-📖 **[Getting Started Guide](docs/getting_started.md)** - Learn the basics
-📖 **[Configuration Reference](docs/config_file.md)** - All configuration parameters
-📖 **[XOR Example Walkthrough](docs/xor_example.md)** - Complete tutorial
-📖 **[API Reference](docs/api_reference.md)** - Complete API documentation
-📖 **[Activation Functions](docs/activation_functions.md)** - Available activation functions
-📖 **[Aggregation Functions](docs/aggregation_functions.md)** - Aggregation function reference
-📖 **[Algorithm Internals](docs/algorithm_internals.md)** - Deep dive into NEAT mechanics
-📖 **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
-📖 **[Troubleshooting Guide](docs/troubleshooting.md)** - Common problems and solutions
-📖 **[FAQ](docs/faq.md)** - Frequently asked questions
+- **[Getting Started Guide](docs/getting_started.md)** - Learn the basics
+- **[Configuration Reference](docs/config_file.md)** - All configuration parameters
+- **[XOR Example Walkthrough](docs/xor_example.md)** - Complete tutorial
+- **[API Reference](docs/api_reference.md)** - Complete API documentation
+- **[Activation Functions](docs/activation_functions.md)** - Available activation functions
+- **[Aggregation Functions](docs/aggregation_functions.md)** - Aggregation function reference
+- **[Algorithm Internals](docs/algorithm_internals.md)** - Deep dive into NEAT mechanics
+- **[Visualization Guide](docs/visualization_guide.md)** - Complete visualization tutorial
+- **[Troubleshooting Guide](docs/troubleshooting.md)** - Common problems and solutions
+- **[FAQ](docs/faq.md)** - Frequently asked questions
 
 ## Example: Solving XOR
 
