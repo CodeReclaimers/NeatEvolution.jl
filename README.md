@@ -283,4 +283,4 @@ This project is inspired by and follows the design of [neat-python](https://gith
 
 - **Original NEAT Paper**: [Evolving Neural Networks through Augmenting Topologies](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf)
 - **neat-python**: [GitHub](https://github.com/CodeReclaimers/neat-python) | [Documentation](https://neat-python.readthedocs.io/)
-- **Kenneth Stanley's Website**: [Homepage](http://www.cs.ucf.edu/~kstanley/)
+- **Kenneth Stanley's Website**: [Homepage](https://www.kenstanley.net)
