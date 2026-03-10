@@ -258,11 +258,11 @@ function import_network_json(filename::String, config::GenomeConfig)
 end
 
 """
-    import_network_json_v1(network_data::Dict, config::GenomeConfig) -> Genome
+    import_network_json_v1(network_data::AbstractDict, config::GenomeConfig) -> Genome
 
 Import a genome from neat-python v1.0 format.
 """
-function import_network_json_v1(network_data::Dict, config::GenomeConfig)
+function import_network_json_v1(network_data::AbstractDict, config::GenomeConfig)
     # Extract metadata
     metadata = get(network_data, "metadata", Dict())
     genome_id = get(metadata, "genome_id", 1)
@@ -340,11 +340,11 @@ function import_network_json_v1(network_data::Dict, config::GenomeConfig)
 end
 
 """
-    import_network_json_legacy(network_data::Dict, config::GenomeConfig) -> Genome
+    import_network_json_legacy(network_data::AbstractDict, config::GenomeConfig) -> Genome
 
 Import a genome from legacy NeatEvolution.jl format (pre-v1.0).
 """
-function import_network_json_legacy(network_data::Dict, config::GenomeConfig)
+function import_network_json_legacy(network_data::AbstractDict, config::GenomeConfig)
     # Extract metadata
     genome_id = get(get(network_data, "metadata", Dict()), "genome_id", 1)
     fitness = get(network_data, "fitness", nothing)
