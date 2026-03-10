@@ -24,7 +24,7 @@ NeatEvolutionVisualizationExt = "Plots"
 
 [compat]
 FunctionWrappers = "1"
-GLMakie = "0.10"
+GLMakie = "0.10, 0.13"
 GraphMakie = "0.5"
 Graphs = "1.9"
 JSON = "0.21"
