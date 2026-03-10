@@ -288,14 +288,14 @@ function import_network_json_v1(network_data::AbstractDict, config::GenomeConfig
         node.response = node_data["response"]
 
         # Extract activation function name
-        if isa(node_data["activation"], Dict)
+        if isa(node_data["activation"], AbstractDict)
             node.activation = Symbol(node_data["activation"]["name"])
         else
             node.activation = Symbol(node_data["activation"])
         end
 
         # Extract aggregation function name
-        if isa(node_data["aggregation"], Dict)
+        if isa(node_data["aggregation"], AbstractDict)
             agg_name = node_data["aggregation"]["name"]
             node.aggregation = agg_name == "none" ? :sum : Symbol(agg_name)
         else
