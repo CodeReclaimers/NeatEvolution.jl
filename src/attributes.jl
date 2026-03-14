@@ -142,7 +142,7 @@ function mutate_value(attr::BoolAttribute, value::Bool, rng::AbstractRNG=Random.
     end
 
     if rate > 0 && rand(rng) < rate
-        return rand(rng, Bool)
+        return !value
     end
 
     return value

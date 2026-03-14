@@ -107,7 +107,7 @@ function advance!(neuron::IZNeuron, dt_msec::Float64)
     end
 
     # Spike check
-    if v > 30.0
+    if v >= 30.0
         neuron.fired = 1.0
         neuron.v = neuron.c
         neuron.u = u + neuron.d

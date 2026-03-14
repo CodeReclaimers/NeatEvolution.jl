@@ -1,7 +1,7 @@
 name = "NeatEvolution"
 uuid = "fcc92617-70eb-4c43-847c-323c44b5224c"
 authors = ["CodeReclaimers <alan@codereclaimers.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

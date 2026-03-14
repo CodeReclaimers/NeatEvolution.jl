@@ -162,7 +162,7 @@ const TYPO_CORRECTIONS = Dict(
     :input_count => :num_inputs,
     :output_count => :num_outputs,
     :hidden_count => :num_hidden,
-    :max_generations => :fitness_threshold,
+    :max_generations => :no_fitness_termination,
     # Coefficient variations
     :c1 => :compatibility_excess_coefficient,
     :c2 => :compatibility_disjoint_coefficient,

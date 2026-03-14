@@ -494,15 +494,8 @@ end
         # The continuous ODE is: tau * dy/dt = -y + x
         # Exact continuous solution: y(t) = x * (1 - exp(-t/tau))
         #
-        # The CTRNN implementation uses double-buffered Euler integration,
-        # where each buffer is updated every other step. For a node with
-        # only external input (no self-connection), each buffer makes N/2
-        # Euler updates in N real steps, giving an effective time constant
-        # of 2*tau. The analytical reference for the double-buffered system is:
-        #   y(t) = x * (1 - exp(-t / (2*tau)))
-        #
-        # With small dt, the Euler discretization error relative to this
-        # adjusted formula is O(dt), validating integration accuracy.
+        # With small dt, the forward Euler discretization error relative to
+        # this formula is O(dt), validating integration accuracy.
         tau = 0.1
         x_input = 2.5
         dt = 0.0001  # small step for accuracy
@@ -514,8 +507,6 @@ end
 
         net = CTRNNNetwork(genome, config)
 
-        tau_eff = 2 * tau  # effective time constant from double-buffering
-
         # Check at several time points
         check_times = [0.01, 0.05, 0.1, 0.2, 0.5]
         prev_time = 0.0
@@ -525,7 +516,7 @@ end
             advance!(net, [x_input], advance_by, dt)
             prev_time = t
 
-            y_analytical = x_input * (1.0 - exp(-t / tau_eff))
+            y_analytical = x_input * (1.0 - exp(-t / tau))
             y_euler = net.values[net.active][0]
 
             println("  Analytical: t=$t, expected=$y_analytical, euler=$y_euler, err=$(abs(y_euler - y_analytical))")

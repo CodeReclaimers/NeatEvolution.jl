@@ -32,7 +32,7 @@ function update!(stagnation::Stagnation, species_set::SpeciesSet, generation::In
             continue
         end
 
-        prev_fitness = isempty(s.fitness_history) ? -Inf : maximum(s.fitness_history)
+        prev_fitness = isempty(s.fitness_history) ? -Inf : last(s.fitness_history)
 
         s.fitness = stagnation.species_fitness_func(fitnesses)
         push!(s.fitness_history, s.fitness)

@@ -161,8 +161,8 @@ function advance!(net::CTRNNNetwork, inputs::Vector{Float64},
             s = ne.aggregation(net._buffer)
             z = ne.activation(ne.bias + ne.response * s)
 
-            # Forward Euler: y += (dt/tau) * (-y + z)
-            ovalues[node_id] += (dt / ne.time_constant) * (-ovalues[node_id] + z)
+            # Forward Euler: y(t+dt) = y(t) + (dt/tau) * (-y(t) + z)
+            ovalues[node_id] = ivalues[node_id] + (dt / ne.time_constant) * (-ivalues[node_id] + z)
         end
 
         net.time_seconds += dt

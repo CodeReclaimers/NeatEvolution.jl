@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "NeatEvolution.jl"
+type: software
+authors:
+  - family-names: McIntyre
+    given-names: Alan
+    orcid: "https://orcid.org/0000-0002-8071-4219"
+version: "0.1.1"
+date-released: "2026-03-14"
+url: "https://github.com/CodeReclaimers/NeatEvolution.jl"
+repository-code: "https://github.com/CodeReclaimers/NeatEvolution.jl"
+license: BSD-3-Clause
+keywords:
+  - neuroevolution
+  - NEAT
+  - evolutionary-algorithms
+  - neural-networks
+  - Julia
+abstract: >-
+  A Julia package implementing NeuroEvolution of Augmenting
+  Topologies (NEAT). Provides feed-forward, recurrent, CTRNN,
+  and Izhikevich spiking neural network evaluation, with
+  speciation, crossover, and structural mutation. Based on
+  the neat-python implementation.

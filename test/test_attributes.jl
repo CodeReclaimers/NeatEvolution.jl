@@ -244,11 +244,12 @@ using Random
             attr = NeatEvolution.BoolAttribute(:enabled, Symbol("true"), 1.0, 0.0, 0.0)
             rng = MersenneTwister(42)
 
-            # With 100% mutate rate, result is random bool
+            # With 100% mutate rate, mutation always flips the value
             values = [NeatEvolution.mutate_value(attr, true, rng) for _ in 1:1000]
-            false_count = count(v -> !v, values)
-            rate = false_count / 1000
-            @test 0.4 < rate < 0.6  # Random bool, so ~50% false
+            @test all(v -> !v, values)  # All flipped from true to false
+
+            values = [NeatEvolution.mutate_value(attr, false, rng) for _ in 1:1000]
+            @test all(v -> v, values)  # All flipped from false to true
         end
 
         @testset "mutate_value - directional bias" begin

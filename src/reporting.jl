@@ -20,7 +20,8 @@ function end_generation!(reporter::Reporter, config::Config, population::Dict{In
 function found_solution!(reporter::Reporter, config::Config, generation::Int, best_genome::Genome) end
 function complete_extinction!(reporter::Reporter) end
 
-# post_evaluate! must be implemented by each reporter that needs it
+function post_evaluate!(reporter::Reporter, config::Config, population::Dict{Int, Genome},
+                       species_set, best_genome::Genome, generation::Int) end
 
 """
 Simple stdout reporter for tracking evolution progress.

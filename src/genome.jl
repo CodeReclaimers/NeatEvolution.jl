@@ -100,18 +100,22 @@ function connect_full!(genome::Genome, config::GenomeConfig, direct::Bool, rng::
 end
 
 """
-Create connections for FS-NEAT initialization (inputs to outputs only).
+Create connections for FS-NEAT initialization.
+
+Selects a single random input and connects it to all outputs (or through hidden nodes
+if connect_hidden is true). This feature-selective approach starts evolution with minimal
+connectivity, letting it discover which inputs are useful.
 """
 function connect_fs_neat!(genome::Genome, config::GenomeConfig, connect_hidden::Bool, rng::AbstractRNG)
     hidden = [k for k in keys(genome.nodes) if !(k in config.output_keys)]
     output = [k for k in keys(genome.nodes) if k in config.output_keys]
 
-    # If connect_hidden is true and there are hidden nodes, connect through hidden
+    # Select a single random input (feature-selective)
+    input_key = config.input_keys[rand(rng, 1:length(config.input_keys))]
+
     if connect_hidden && !isempty(hidden)
-        for input_key in config.input_keys
-            for hidden_key in hidden
-                add_connection!(genome, config, input_key, hidden_key, rng)
-            end
+        for hidden_key in hidden
+            add_connection!(genome, config, input_key, hidden_key, rng)
         end
         for hidden_key in hidden
             for output_key in output
@@ -119,11 +123,8 @@ function connect_fs_neat!(genome::Genome, config::GenomeConfig, connect_hidden::
             end
         end
     else
-        # Otherwise, connect inputs directly to outputs
-        for input_key in config.input_keys
-            for output_key in output
-                add_connection!(genome, config, input_key, output_key, rng)
-            end
+        for output_key in output
+            add_connection!(genome, config, input_key, output_key, rng)
         end
     end
 end
@@ -193,8 +194,16 @@ Configure a genome through crossover of two parents.
 function configure_crossover!(genome::Genome, parent1::Genome, parent2::Genome,
                              config::GenomeConfig, rng::AbstractRNG=Random.GLOBAL_RNG)
     # Determine which parent is fitter
-    if parent1.fitness === nothing || parent2.fitness === nothing ||
-       parent1.fitness == parent2.fitness
+    if parent1.fitness === nothing && parent2.fitness === nothing
+        # Neither has fitness; default to parent1
+        fitter, other = parent1, parent2
+    elseif parent1.fitness === nothing
+        # Only parent2 has fitness; it is fitter
+        fitter, other = parent2, parent1
+    elseif parent2.fitness === nothing
+        # Only parent1 has fitness; it is fitter
+        fitter, other = parent1, parent2
+    elseif parent1.fitness == parent2.fitness
         fitter, other = parent1, parent2
     elseif parent1.fitness > parent2.fitness
         fitter, other = parent1, parent2

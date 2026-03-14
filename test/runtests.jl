@@ -871,7 +871,7 @@ include("test_misc_coverage.jl")
 
             @test g.key == 42
             @test Set(keys(g.nodes)) == Set([0])
-            @test length(g.connections) == 2  # 2 inputs to 1 output
+            @test length(g.connections) == 1  # 1 random input to 1 output
         end
 
         @testset "FS-NEAT - with hidden (nohidden)" begin
@@ -899,7 +899,7 @@ include("test_misc_coverage.jl")
 
             @test g.key == 42
             @test Set(keys(g.nodes)) == Set([0, 1, 2])
-            @test length(g.connections) == 2  # Only inputs to output
+            @test length(g.connections) == 1  # 1 random input to output
         end
 
         @testset "FS-NEAT - with hidden (connect hidden)" begin
@@ -927,7 +927,7 @@ include("test_misc_coverage.jl")
 
             @test g.key == 42
             @test Set(keys(g.nodes)) == Set([0, 1, 2])
-            @test length(g.connections) == 6  # inputs->hidden + hidden->output
+            @test length(g.connections) == 4  # 1 input->2 hidden + 2 hidden->1 output
         end
 
         @testset "Full - no hidden" begin
