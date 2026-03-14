@@ -10,6 +10,7 @@ version: "0.1.1"
 date-released: "2026-03-14"
 url: "https://github.com/CodeReclaimers/NeatEvolution.jl"
 repository-code: "https://github.com/CodeReclaimers/NeatEvolution.jl"
+doi: "10.5281/zenodo.19025463"
 license: BSD-3-Clause
 keywords:
   - neuroevolution

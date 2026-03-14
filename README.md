@@ -10,7 +10,7 @@ A pure Julia implementation of **NEAT** (NeuroEvolution of Augmenting Topologies
 NEAT is a method developed by Kenneth O. Stanley for evolving arbitrary neural networks. This implementation is compliant with the original [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf) and provides a robust platform for neuroevolution experiments.
 
 **What this library is:**
-- A faithful implementation of the NEAT algorithm (v0.1.0)
+- A faithful implementation of the NEAT algorithm
 - A flexible platform for neuroevolution experiments
 - A starting point for custom neuroevolution solutions
 
@@ -205,7 +205,13 @@ See the [Visualization Guide](docs/visualization_guide.md) for complete details.
 
 ## Version History
 
-**v0.1.0** (Current) - NEAT Paper Compliance + Enhancements
+**v0.1.1** (Current) - Bug Fixes
+- Fixed CTRNN forward Euler integration (wrong buffer read)
+- Fixed FS-NEAT initialization (was identical to full connectivity)
+- Fixed BoolAttribute mutation, crossover fitness handling, stagnation detection
+- Added CITATION.cff with Zenodo DOI
+
+**v0.1.0** - NEAT Paper Compliance + Enhancements
 - ✅ Innovation numbers implemented
 - ✅ Crossover disable rule fixed (75%)
 - ✅ Compatibility distance formula corrected
@@ -259,13 +265,18 @@ Contributions welcome! Please:
 
 ## Citing
 
-If you use NeatEvolution.jl in a publication, you can cite it using the following BibTeX entry:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19025463.svg)](https://doi.org/10.5281/zenodo.19025463)
+
+If you use NeatEvolution.jl in a publication, please cite it using the following BibTeX entry:
 
 ```bibtex
 @software{McIntyre_NeatEvolution_jl,
   author = {McIntyre, Alan},
   title = {{NeatEvolution.jl}},
-  url = {https://github.com/CodeReclaimers/NeatEvolution.jl}
+  url = {https://github.com/CodeReclaimers/NeatEvolution.jl},
+  doi = {10.5281/zenodo.19025463},
+  version = {0.1.1},
+  year = {2026}
 }
 ```
 
