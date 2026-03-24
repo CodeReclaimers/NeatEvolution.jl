@@ -295,3 +295,17 @@ This project is inspired by and follows the design of [neat-python](https://gith
 - **Original NEAT Paper**: [Evolving Neural Networks through Augmenting Topologies](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf)
 - **neat-python**: [GitHub](https://github.com/CodeReclaimers/neat-python) | [Documentation](https://neat-python.readthedocs.io/)
 - **Kenneth Stanley's Website**: [Homepage](https://www.kenstanley.net)
+
+## About the Maintainer
+
+NeatEvolution.jl is developed and maintained by Alan McIntyre
+(CodeReclaimers LLC, ORCID: [0000-0002-8071-4219](https://orcid.org/0000-0002-8071-4219)).
+
+Alan McIntyre is an independent consultant with 28+
+years of software development experience and an MS in Applied Mathematics.
+Specializations include computational geometry, CAD reverse engineering, C++ scientific computing, and Python scientific computing.
+
+Available for research consulting and implementation engagements.
+Full profile: [https://codereclaimers.com/consulting](https://codereclaimers.com/consulting)
+Contact: consulting@codereclaimers.com
+
