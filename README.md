@@ -303,7 +303,7 @@ NeatEvolution.jl is developed and maintained by Alan McIntyre
 
 Alan McIntyre is an independent consultant with 28+
 years of software development experience and an MS in Applied Mathematics.
-Specializations include computational geometry, CAD reverse engineering, C++ scientific computing, and Python scientific computing.
+Specializations include computational geometry, CAD reverse engineering, C++ scientific computing, and Julia scientific computing.
 
 Available for research consulting and implementation engagements.
 Full profile: [https://codereclaimers.com/consulting](https://codereclaimers.com/consulting)
