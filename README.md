@@ -266,6 +266,7 @@ Contributions welcome! Please:
 ## Citing
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19025463.svg)](https://doi.org/10.5281/zenodo.19025463)
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/neatevolution-jl)
 
 If you use NeatEvolution.jl in a publication, please cite it using the following BibTeX entry:
 
